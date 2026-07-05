@@ -161,7 +161,18 @@ export const PhotoCanvas = forwardRef<PhotoCanvasHandle, Props>(function PhotoCa
         trRef.current?.nodes([]);
         trRef.current?.getLayer()?.batchDraw();
         const pixelRatio = present.width / Math.max(1, stage.width());
-        const canvas = stage.toCanvas({ pixelRatio });
+        let canvas = stage.toCanvas({ pixelRatio }) as HTMLCanvasElement;
+        // pixelRatio rounding can leave the raster 1px off the true document size;
+        // normalize to exact source dimensions so exports match the stated pixels.
+        if (canvas.width !== present.width || canvas.height !== present.height) {
+          const exact = document.createElement("canvas");
+          exact.width = present.width;
+          exact.height = present.height;
+          const ctx = exact.getContext("2d")!;
+          ctx.imageSmoothingQuality = "high";
+          ctx.drawImage(canvas, 0, 0, exact.width, exact.height);
+          canvas = exact;
+        }
         // Reattach transformer to the current selection.
         if (selectedId) {
           const node = stage.findOne(`#${selectedId}`);
