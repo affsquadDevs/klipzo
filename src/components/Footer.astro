@@ -54,7 +54,12 @@ const video = VIDEO_TOOLS.filter((x) => x.status === "v1").slice(0, 6);
 
   <div class="k-container k-footer__bar">
     <p>© {year} {legalName}. {t("footer.rights")}</p>
-    <p class="k-footer__note">{t("footer.builtBy")}</p>
+    <p class="k-footer__note">
+      <button type="button" class="k-footer__cookies" onclick="window.klipzoOpenConsent && window.klipzoOpenConsent()">
+        Cookie choices
+      </button>
+      · {t("footer.builtBy")}
+    </p>
   </div>
 </footer>
 
@@ -111,6 +116,19 @@ const video = VIDEO_TOOLS.filter((x) => x.status === "v1").slice(0, 6);
     border-top: 1px solid var(--color-border);
     color: var(--color-fg-subtle);
     font-size: 0.82rem;
+  }
+  .k-footer__cookies {
+    background: none;
+    border: none;
+    color: var(--color-fg-muted);
+    font: inherit;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .k-footer__cookies:hover {
+    color: var(--color-fg);
   }
 
   @media (min-width: 720px) {

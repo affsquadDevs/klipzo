@@ -60,13 +60,7 @@ const live = Boolean(publisher && slot);
   }
 </aside>
 
-{
-  live && (
-    <script is:inline>
-      {`(adsbygoogle = window.adsbygoogle || []).push({});`}
-    </script>
-  )
-}
+{live && <script is:inline set:html={`(adsbygoogle = window.adsbygoogle || []).push({});`} />}
 
 <style>
   .k-adslot-wrap {

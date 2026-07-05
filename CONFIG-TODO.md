@@ -45,6 +45,23 @@ grep -rn "__[A-Z0-9_]\+__" src public *.json *.toml
   isolate `/editor` with `COEP: credentialless` and keep it ad-free. See `public/_headers`.
 - **Primary locale:** `en-US`. Add sibling dictionaries under `src/i18n/` to localize.
 
+## Consent / CMP (§7) — action required for EEA/UK/CH personalized ads
+
+Klipzo ships **Google Consent Mode v2** wiring: consent defaults to *denied* in the
+`<head>` ([ConsentAnalytics.astro](src/components/monetization/ConsentAnalytics.astro)),
+and a built-in banner ([ConsentBanner.astro](src/components/monetization/ConsentBanner.astro))
+calls `gtag('consent','update', …)` on the user's choice, reopenable from the footer.
+
+**However**, Google requires a **certified CMP** to serve *personalized* ads to users in
+the EEA, UK, and Switzerland. Before launch you must either:
+
+- turn on Google's own consent management in your AdSense account, **or**
+- integrate a certified IAB TCF v2.2 vendor (e.g. a CMP that also drives Consent Mode v2).
+
+The built-in banner is a compliant Consent Mode v2 signalling layer and a good default,
+but it is **not** an IAB TCF-certified CMP on its own. Wire the certified CMP's
+grant/deny callbacks to the same `gtag('consent','update', …)` calls.
+
 ## Pre-AdSense-application checklist (§7)
 
 AdSense rejects tool-only sites with little text. Apply **only after**:

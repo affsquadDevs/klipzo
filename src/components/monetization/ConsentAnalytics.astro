@@ -22,11 +22,11 @@ const anyTag = gtm || adsense;
 ---
 
 {
+  /* 1. Consent Mode v2 — default denied until the CMP updates it. */
   anyTag && (
-    <>
-      {/* 1. Consent Mode v2 — default denied until the CMP updates it. */}
-      <script is:inline>
-        {`
+    <script
+      is:inline
+      set:html={`
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('consent', 'default', {
@@ -40,9 +40,8 @@ const anyTag = gtm || adsense;
         });
         gtag('set', 'ads_data_redaction', true);
         gtag('set', 'url_passthrough', true);
-        `}
-      </script>
-    </>
+      `}
+    />
   )
 }
 

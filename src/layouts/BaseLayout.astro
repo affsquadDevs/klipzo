@@ -12,6 +12,7 @@ import Seo from "../components/Seo.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import ConsentAnalytics from "../components/monetization/ConsentAnalytics.astro";
+import ConsentBanner from "../components/monetization/ConsentBanner.astro";
 
 interface Props {
   title: string;
@@ -84,6 +85,7 @@ const {
       <slot />
     </main>
     {!bareChrome && <Footer />}
+    <ConsentBanner />
 
     <style>
       .k-skip-link {

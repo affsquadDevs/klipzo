@@ -1,0 +1,95 @@
+---
+/**
+ * Consent banner wired to Google Consent Mode v2 (§7). Default state is DENIED (set in
+ * <ConsentAnalytics> in the <head>); this banner lets the user grant/deny and calls
+ * gtag('consent','update', …). Choice is stored locally and reopenable via the footer
+ * "Cookie choices" link (window.klipzoOpenConsent()).
+ *
+ * IMPORTANT (see CONFIG-TODO.md): For personalized ads to EEA/UK/CH users, Google
+ * requires a *certified* CMP. This component implements the Consent Mode v2 signalling
+ * and a compliant banner; connect Google's own CMP or a certified IAB TCF vendor
+ * before serving personalized ads in those regions. Only renders when a tag id is set.
+ */
+import { MONETIZATION, isConfigured } from "../../config/site";
+
+const enabled =
+  isConfigured(MONETIZATION.gtmContainerId) || isConfigured(MONETIZATION.adsensePublisherId);
+---
+
+{
+  enabled && (
+    <div id="klipzo-consent" class="consent" hidden role="dialog" aria-label="Cookie consent" aria-live="polite">
+      <div class="consent__inner">
+        <div class="consent__text">
+          <strong>Cookies &amp; ads</strong>
+          <p>
+            We use cookies for ads and anonymous analytics on our website pages. Your photos and
+            videos are never uploaded or shared — this only concerns site usage. See our{" "}
+            <a href="/privacy-policy">Privacy Policy</a>.
+          </p>
+        </div>
+        <div class="consent__actions">
+          <button type="button" class="k-btn k-btn-ghost consent__btn" data-consent="reject">
+            Reject non-essential
+          </button>
+          <button type="button" class="k-btn k-btn-primary consent__btn" data-consent="accept">
+            Accept all
+          </button>
+        </div>
+      </div>
+
+      <style>{`
+        .consent { position: fixed; left: 0; right: 0; bottom: 0; z-index: 80; padding: 0.85rem;
+          background: var(--color-surface); border-top: 1px solid var(--color-border);
+          box-shadow: 0 -8px 24px rgb(0 0 0 / 0.12); }
+        .consent__inner { max-width: 72rem; margin-inline: auto; display: flex; flex-wrap: wrap;
+          align-items: center; gap: 1rem; justify-content: space-between; }
+        .consent__text { max-width: 46rem; }
+        .consent__text strong { display: block; margin-bottom: 0.15rem; font-size: 0.92rem; }
+        .consent__text p { font-size: 0.82rem; color: var(--color-fg-muted); line-height: 1.5; }
+        .consent__actions { display: flex; gap: 0.5rem; flex: 0 0 auto; }
+        .consent__btn { white-space: nowrap; }
+        @media (max-width: 560px) { .consent__actions { width: 100%; } .consent__btn { flex: 1; } }
+      `}</style>
+
+      <script
+        is:inline
+        set:html={`
+        (function () {
+          var KEY = 'klipzo-consent';
+          var el = document.getElementById('klipzo-consent');
+          if (!el) return;
+          function gtag(){ (window.dataLayer = window.dataLayer || []).push(arguments); }
+
+          function apply(granted) {
+            var v = granted ? 'granted' : 'denied';
+            gtag('consent', 'update', {
+              ad_storage: v, ad_user_data: v, ad_personalization: v, analytics_storage: v
+            });
+          }
+          function hide(){ el.setAttribute('hidden',''); }
+          function show(){ el.removeAttribute('hidden'); }
+
+          var saved = null;
+          try { saved = localStorage.getItem(KEY); } catch (e) {}
+          if (saved === 'granted') { apply(true); }
+          else if (saved === 'denied') { apply(false); }
+          else { show(); }
+
+          el.addEventListener('click', function (e) {
+            var t = e.target.closest('[data-consent]');
+            if (!t) return;
+            var granted = t.getAttribute('data-consent') === 'accept';
+            apply(granted);
+            try { localStorage.setItem(KEY, granted ? 'granted' : 'denied'); } catch (e) {}
+            hide();
+          });
+
+          // Reopenable from the footer "Cookie choices" link.
+          window.klipzoOpenConsent = show;
+        })();
+        `}
+      />
+    </div>
+  )
+}
