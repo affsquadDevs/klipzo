@@ -100,6 +100,8 @@ export interface TimedText {
   /** Position keyframes: when set, the text moves from (x,y) to (moveTo) over its
    *  lifetime (a linear 2-keyframe motion). null = static. */
   moveTo: { x: number; y: number } | null;
+  /** True for auto-generated captions (so they can be cleared/regenerated as a group). */
+  isCaption?: boolean;
 }
 
 export interface Project {
@@ -481,6 +483,42 @@ export function updateText(texts: TimedText[], id: string, patch: Partial<TimedT
 
 export function removeText(texts: TimedText[], id: string): TimedText[] {
   return texts.filter((t) => t.id !== id);
+}
+
+/** Replace any existing captions with a fresh set from timed segments (Batch 4). */
+export function setCaptions(
+  texts: TimedText[],
+  segments: Array<{ text: string; start: number; end: number }>,
+): TimedText[] {
+  const kept = texts.filter((t) => !t.isCaption);
+  const captions: TimedText[] = segments.map((s) => ({
+    id: newId("cap"),
+    type: "text",
+    text: s.text,
+    start: s.start,
+    end: s.end,
+    x: 0.5,
+    y: 0.86,
+    size: 0.055,
+    color: "#ffffff",
+    bold: true,
+    outline: true,
+    shadow: true,
+    fadeIn: 0,
+    fadeOut: 0,
+    animation: "none",
+    moveTo: null,
+    isCaption: true,
+  }));
+  return [...kept, ...captions];
+}
+
+export function clearCaptions(texts: TimedText[]): TimedText[] {
+  return texts.filter((t) => !t.isCaption);
+}
+
+export function captionCount(texts: TimedText[]): number {
+  return texts.filter((t) => t.isCaption).length;
 }
 
 /* ------------------------------------------------------------------ *

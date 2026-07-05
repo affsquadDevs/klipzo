@@ -330,6 +330,29 @@
   cursor: pointer;
 }
 
+/* Captions panel */
+.ed-cap-list {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0.5rem 0;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+.ed-cap-item {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+.ed-cap-item__time {
+  color: var(--color-accent);
+  font-variant-numeric: tabular-nums;
+  flex: 0 0 auto;
+}
+.ed-cap-item__text {
+  color: var(--color-fg-muted);
+}
+
 /* Audio panel */
 .ed-audio-list {
   display: grid;

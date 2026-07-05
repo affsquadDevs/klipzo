@@ -20,6 +20,8 @@ import {
   addText,
   updateText,
   removeText,
+  setCaptions,
+  clearCaptions,
   addMusic,
   updateMusic,
   removeMusic,
@@ -73,6 +75,9 @@ interface TimelineState {
   addMusicTrack: (init: Parameters<typeof addMusic>[1]) => void;
   patchMusic: (id: string, patch: Partial<MusicTrack>, history?: boolean) => void;
   deleteMusic: (id: string) => void;
+
+  setCaptions: (segments: Array<{ text: string; start: number; end: number }>) => void;
+  clearCaptions: () => void;
 
   selectClip: (index: number | null) => void;
   selectText: (id: string | null) => void;
@@ -222,6 +227,9 @@ export const useTimeline = create<TimelineState>((set, get) => {
       commit((p) => ({ texts: removeText(p.texts, id) }));
       set((s) => (s.selectedTextId === id ? { selectedTextId: null } : s));
     },
+
+    setCaptions: (segments) => commit((p) => ({ texts: setCaptions(p.texts, segments) })),
+    clearCaptions: () => commit((p) => ({ texts: clearCaptions(p.texts) })),
 
     selectClip: (selectedClipIndex) =>
       set({ selectedClipIndex, selectedTextId: null, selectedMusicId: null }),

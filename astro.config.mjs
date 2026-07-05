@@ -46,6 +46,9 @@ export default defineConfig({
         "gifenc",
         "soundtouchjs",
       ],
+      // transformers.js is huge and dynamic-imported only when captions run; let it
+      // manage its own ESM/WASM/worker loading instead of Vite pre-bundling it.
+      exclude: ["@huggingface/transformers"],
     },
     build: {
       // The editor is heavy; make its chunking explicit so it never leaks

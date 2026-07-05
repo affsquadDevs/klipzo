@@ -20,10 +20,11 @@ import { totalDuration, effectiveTransition, type TransitionType, type TextAnima
 import { MultiTimeline } from "./timeline/MultiTimeline";
 import { EffectsPanel } from "./panels/EffectsPanel";
 import { AudioPanel } from "./panels/AudioPanel";
+import { CaptionsPanel } from "./panels/CaptionsPanel";
 import "../photo/photo-editor.css";
 import "./video-editor.css";
 
-type Mode = "clips" | "effects" | "text" | "reframe" | "rotate" | "gif" | "audio" | "frame";
+type Mode = "clips" | "effects" | "text" | "captions" | "reframe" | "rotate" | "gif" | "audio" | "frame";
 
 interface Props {
   /** Null when opening straight into a preloaded .klipzo project. */
@@ -387,6 +388,7 @@ export function VideoEditor({ media, onClose, projectPreloaded = false }: Props)
     { id: "clips", label: "Clips", icon: "✂" },
     { id: "effects", label: "Effects", icon: "🎨" },
     { id: "text", label: "Text", icon: "T" },
+    { id: "captions", label: "Captions", icon: "💬" },
     { id: "reframe", label: "Reframe", icon: "▭" },
     { id: "rotate", label: "Rotate", icon: "⟳" },
     { id: "gif", label: "GIF", icon: "◉", disabled: !singleClipOnly, hint: "Single-clip timelines only (for now)" },
@@ -476,6 +478,7 @@ export function VideoEditor({ media, onClose, projectPreloaded = false }: Props)
         )}
         {mode === "effects" && <EffectsPanel />}
         {mode === "text" && <TextPanel currentT={currentT} duration={duration} />}
+        {mode === "captions" && <CaptionsPanel filename={firstAsset?.file.name ?? "captions"} />}
         {mode === "reframe" && (
           <div className="ed-panel">
             <div className="ed-panel__head"><h3>Reframe</h3></div>
