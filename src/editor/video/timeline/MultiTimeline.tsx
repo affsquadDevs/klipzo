@@ -36,14 +36,18 @@ export function MultiTimeline({ project, current, onSeek }: Props) {
     | { kind: "scrub" }
     | { kind: "trim-in" | "trim-out"; clipIndex: number }
     | { kind: "text-move"; textId: string; grabOffset: number }
+    | { kind: "music-move"; musicId: string; grabOffset: number }
   >(null);
 
   const selectedClipIndex = useTimeline((s) => s.selectedClipIndex);
   const selectedTextId = useTimeline((s) => s.selectedTextId);
+  const selectedMusicId = useTimeline((s) => s.selectedMusicId);
   const selectClip = useTimeline((s) => s.selectClip);
   const selectText = useTimeline((s) => s.selectText);
+  const selectMusic = useTimeline((s) => s.selectMusic);
   const trimClip = useTimeline((s) => s.trimClip);
   const patchText = useTimeline((s) => s.patchText);
+  const patchMusic = useTimeline((s) => s.patchMusic);
   const beginStroke = useTimeline((s) => s.beginStroke);
   const endStroke = useTimeline((s) => s.endStroke);
   const setClipTransition = useTimeline((s) => s.setClipTransition);
@@ -104,6 +108,12 @@ export function MultiTimeline({ project, current, onSeek }: Props) {
       const len = text.end - text.start;
       const start = Math.min(Math.max(0, t - drag.grabOffset), Math.max(0, duration - len));
       patchText(drag.textId, { start, end: start + len }, false);
+    }
+    if (drag.kind === "music-move") {
+      const m = project.music.find((x) => x.id === drag.musicId);
+      if (!m) return;
+      const start = Math.max(0, Math.min(t - drag.grabOffset, duration));
+      patchMusic(drag.musicId, { start }, false);
     }
   }
 
@@ -235,6 +245,35 @@ export function MultiTimeline({ project, current, onSeek }: Props) {
           );
         })}
       </div>
+
+      {/* Music / voiceover lane */}
+      {project.music.length > 0 && (
+        <div className="mt-musiclane">
+          {project.music.map((m) => {
+            const barStart = Math.max(0, Math.min(m.start, duration));
+            const len = Math.max(0.1, Math.min(m.out - m.in, duration - barStart));
+            return (
+              <button
+                key={m.id}
+                className={`mt-musicbar ${selectedMusicId === m.id ? "is-selected" : ""}`}
+                style={{ left: pct(barStart), width: pct(len) }}
+                title={`${m.name} (drag to move)`}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  capture(e);
+                  selectMusic(m.id);
+                  beginStroke();
+                  dragRef.current = { kind: "music-move", musicId: m.id, grabOffset: timeFromClientX(e.clientX) - m.start };
+                }}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
+              >
+                {m.kind === "voiceover" ? "🎙" : "🎵"} {m.name.slice(0, 14)}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

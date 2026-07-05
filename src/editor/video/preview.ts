@@ -29,7 +29,7 @@ export class PreviewEngine {
   readonly video: HTMLVideoElement;
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
-  private project: Project = { assets: {}, clips: [], texts: [] };
+  private project: Project = { assets: {}, clips: [], texts: [], music: [] };
   private config: PreviewConfig = { rotate: 0, outW: 640, outH: 360, fit: "contain" };
   private t = 0;
   private playing = false;
@@ -137,10 +137,17 @@ export class PreviewEngine {
     this.onUpdate(this.t, false);
   }
 
+  /** Apply the active clip's speed + volume to the preview element. */
+  private applyClipPlayback(clip: Clip): void {
+    this.video.playbackRate = clip.speed || 1;
+    this.video.volume = Math.min(1, Math.max(0, clip.volume));
+  }
+
   private async startSegmentPlayback(): Promise<void> {
     const seg = this.segmentAt(this.t);
     if (!seg) return;
     await this.ensureAsset(seg.clip.assetId);
+    this.applyClipPlayback(seg.clip);
     const srcT = sourceTime(seg, this.t);
     if (Math.abs(this.video.currentTime - srcT) > 0.05) this.video.currentTime = srcT;
     await this.video.play().catch(() => {});
@@ -153,11 +160,13 @@ export class PreviewEngine {
     const seg = this.segmentAt(this.t);
     if (!seg) return;
     const clipEndSrc = seg.clip.out;
+    const speed = seg.clip.speed || 1;
     const v = this.video;
 
-    // Advance the timeline clock from the video element's own clock.
+    // Timeline advances at 1x; the video element runs at `speed`, so divide the
+    // source-time delta by speed to get timeline time.
     const srcNow = Math.min(v.currentTime, clipEndSrc);
-    this.t = seg.start + (srcNow - seg.clip.in);
+    this.t = seg.start + (srcNow - seg.clip.in) / speed;
 
     if (v.currentTime >= clipEndSrc - 0.02 || v.ended) {
       // Segment finished → jump to the next one, or stop at the end.
@@ -167,6 +176,7 @@ export class PreviewEngine {
         this.t = Math.max(this.t, next.start + 0.0001);
         void (async () => {
           await this.ensureAsset(next.clip.assetId);
+          this.applyClipPlayback(next.clip);
           this.video.currentTime = sourceTime(next, this.t);
           if (this.playing) await this.video.play().catch(() => {});
         })();

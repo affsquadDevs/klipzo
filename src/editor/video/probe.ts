@@ -8,6 +8,30 @@ import { newId, type SourceAsset } from "./timeline/model";
 
 export class ProbeError extends Error {}
 
+export interface AudioProbe {
+  file: File;
+  url: string;
+  duration: number;
+  name: string;
+}
+
+/** Probe an audio file's exact duration (decode) for music/voiceover tracks. */
+export async function probeAudio(file: File): Promise<AudioProbe> {
+  const ctx = new AudioContext();
+  try {
+    const buffer = await ctx.decodeAudioData(await file.arrayBuffer());
+    if (!Number.isFinite(buffer.duration) || buffer.duration <= 0) {
+      throw new ProbeError("Couldn’t read this audio file’s length.");
+    }
+    return { file, url: URL.createObjectURL(file), duration: buffer.duration, name: file.name };
+  } catch (e) {
+    if (e instanceof ProbeError) throw e;
+    throw new ProbeError("This audio file couldn’t be decoded in your browser.");
+  } finally {
+    void ctx.close();
+  }
+}
+
 export async function probeAsset(file: File): Promise<SourceAsset> {
   const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
   try {

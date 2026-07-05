@@ -52,6 +52,29 @@ export interface Clip {
   adjustments: Adjustments;
   /** Per-clip chroma key / green-screen (Batch 1). */
   chroma: ChromaKey;
+  /** Playback speed multiplier (Batch 2). >1 faster, <1 slower. */
+  speed: number;
+  /** This clip's own-audio gain, 0..2 (Batch 2). */
+  volume: number;
+}
+
+/** A music / voiceover track placed on the timeline (Batch 2). */
+export interface MusicTrack {
+  id: string;
+  kind: "music" | "voiceover";
+  name: string;
+  file: File;
+  url: string;
+  duration: number;
+  /** Timeline position where the track starts (seconds). */
+  start: number;
+  /** Source trim within the audio file. */
+  in: number;
+  out: number;
+  /** 0..2. */
+  volume: number;
+  fadeIn: number;
+  fadeOut: number;
 }
 
 export interface TimedText {
@@ -80,6 +103,7 @@ export interface Project {
   assets: Record<string, SourceAsset>;
   clips: Clip[];
   texts: TimedText[];
+  music: MusicTrack[];
 }
 
 export const MIN_CLIP_LEN = 0.1;
@@ -91,10 +115,16 @@ export function newId(prefix: string): string {
 }
 
 export function emptyProject(): Project {
-  return { assets: {}, clips: [], texts: [] };
+  return { assets: {}, clips: [], texts: [], music: [] };
 }
 
+/** Timeline duration of a clip, accounting for its speed. */
 export function clipDuration(clip: Clip): number {
+  return (clip.out - clip.in) / (clip.speed || 1);
+}
+
+/** Source (media-local) duration of a clip's trimmed range, ignoring speed. */
+export function clipSourceDuration(clip: Clip): number {
   return clip.out - clip.in;
 }
 
@@ -151,9 +181,9 @@ export function totalDuration(clips: Clip[]): number {
   return segs.length ? segs[segs.length - 1]!.end : 0;
 }
 
-/** Map timeline time → source time within a segment's asset. */
+/** Map timeline time → source time within a segment's asset (speed-aware). */
 export function sourceTime(seg: Segment, t: number): number {
-  return seg.clip.in + (t - seg.start);
+  return seg.clip.in + (t - seg.start) * (seg.clip.speed || 1);
 }
 
 /**
@@ -313,8 +343,26 @@ export function appendClip(clips: Clip[], asset: SourceAsset): Clip[] {
     transitionAfter: { type: "none", duration: 0.5 },
     adjustments: { ...ZERO_ADJUSTMENTS },
     chroma: defaultChroma(),
+    speed: 1,
+    volume: 1,
   };
   return [...clips, clip];
+}
+
+export function setClipSpeed(clips: Clip[], index: number, speed: number): Clip[] {
+  const clip = clips[index];
+  if (!clip) return clips;
+  const next = [...clips];
+  next[index] = { ...clip, speed: Math.min(4, Math.max(0.25, speed)) };
+  return next;
+}
+
+export function setClipVolume(clips: Clip[], index: number, volume: number): Clip[] {
+  const clip = clips[index];
+  if (!clip) return clips;
+  const next = [...clips];
+  next[index] = { ...clip, volume: Math.min(2, Math.max(0, volume)) };
+  return next;
 }
 
 export function setClipAdjustments(clips: Clip[], index: number, adjustments: Adjustments): Clip[] {
@@ -418,4 +466,41 @@ export function updateText(texts: TimedText[], id: string, patch: Partial<TimedT
 
 export function removeText(texts: TimedText[], id: string): TimedText[] {
   return texts.filter((t) => t.id !== id);
+}
+
+/* ------------------------------------------------------------------ *
+ * Music / voiceover track operations
+ * ------------------------------------------------------------------ */
+
+export function addMusic(
+  music: MusicTrack[],
+  init: Omit<MusicTrack, "id" | "start" | "in" | "out" | "volume" | "fadeIn" | "fadeOut"> &
+    Partial<Pick<MusicTrack, "start" | "in" | "out" | "volume" | "fadeIn" | "fadeOut">>,
+): MusicTrack[] {
+  const track: MusicTrack = {
+    id: newId(init.kind === "voiceover" ? "vo" : "music"),
+    start: 0,
+    in: 0,
+    out: init.duration,
+    volume: init.kind === "voiceover" ? 1 : 0.6,
+    fadeIn: 0,
+    fadeOut: init.kind === "music" ? 0.5 : 0,
+    ...init,
+  };
+  return [...music, track];
+}
+
+export function updateMusic(music: MusicTrack[], id: string, patch: Partial<MusicTrack>): MusicTrack[] {
+  return music.map((m) => (m.id === id ? { ...m, ...patch } : m));
+}
+
+export function removeMusic(music: MusicTrack[], id: string): MusicTrack[] {
+  return music.filter((m) => m.id !== id);
+}
+
+/** Total timeline length including music that runs past the video. */
+export function projectDuration(project: Project): number {
+  const video = totalDuration(project.clips);
+  const music = project.music.reduce((max, m) => Math.max(max, m.start + (m.out - m.in)), 0);
+  return Math.max(video, music);
 }

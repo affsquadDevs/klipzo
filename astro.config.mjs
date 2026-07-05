@@ -44,6 +44,7 @@ export default defineConfig({
         "zustand",
         "mediabunny",
         "gifenc",
+        "soundtouchjs",
       ],
     },
     build: {

@@ -330,6 +330,57 @@
   cursor: pointer;
 }
 
+/* Audio panel */
+.ed-audio-list {
+  display: grid;
+  gap: 0.5rem;
+}
+.ed-audio-track {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.55rem 0.7rem;
+  cursor: pointer;
+  background: var(--color-surface);
+}
+.ed-audio-track.is-selected {
+  border-color: var(--color-accent);
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+}
+.ed-audio-track__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  color: var(--color-fg);
+}
+
+/* Music lane on the timeline */
+.mt-musiclane {
+  position: relative;
+  height: 1.3rem;
+}
+.mt-musicbar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  min-width: 14px;
+  border: 1px solid color-mix(in srgb, #21a366 60%, var(--color-border));
+  background: color-mix(in srgb, #21a366 25%, var(--color-surface));
+  color: var(--color-fg-muted);
+  border-radius: 4px;
+  font-size: 0.63rem;
+  cursor: grab;
+  touch-action: none;
+  overflow: hidden;
+  white-space: nowrap;
+  padding-inline: 0.3rem;
+  line-height: 1.3rem;
+}
+.mt-musicbar.is-selected {
+  box-shadow: 0 0 0 1.5px #21a366;
+  color: var(--color-fg);
+}
+
 @media (max-width: 860px) {
   .vt-root.pe-root {
     grid-template-columns: auto 1fr;

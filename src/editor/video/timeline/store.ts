@@ -15,9 +15,14 @@ import {
   setTransition,
   setClipAdjustments,
   setClipChroma,
+  setClipSpeed,
+  setClipVolume,
   addText,
   updateText,
   removeText,
+  addMusic,
+  updateMusic,
+  removeMusic,
   totalDuration,
   type Project,
   type SourceAsset,
@@ -26,17 +31,19 @@ import {
   type Transition,
   type Adjustments,
   type ChromaKey,
+  type MusicTrack,
 } from "./model";
 
 interface HistoryEntry {
   clips: Clip[];
   texts: TimedText[];
+  music: MusicTrack[];
 }
 
 const MAX_HISTORY = 40;
 
 function snap(p: Project): HistoryEntry {
-  return { clips: p.clips, texts: p.texts }; // arrays are immutable (ops always copy)
+  return { clips: p.clips, texts: p.texts, music: p.music }; // arrays are immutable (ops copy)
 }
 
 interface TimelineState {
@@ -45,6 +52,7 @@ interface TimelineState {
   future: HistoryEntry[];
   selectedClipIndex: number | null;
   selectedTextId: string | null;
+  selectedMusicId: string | null;
   _stroke: HistoryEntry | null;
 
   addAsset: (asset: SourceAsset) => void;
@@ -55,13 +63,20 @@ interface TimelineState {
   setClipTransition: (index: number, transition: Transition) => void;
   setClipAdjustments: (index: number, adjustments: Adjustments, history?: boolean) => void;
   setClipChroma: (index: number, chroma: ChromaKey, history?: boolean) => void;
+  setClipSpeed: (index: number, speed: number, history?: boolean) => void;
+  setClipVolume: (index: number, volume: number, history?: boolean) => void;
 
   addTextAt: (t: number) => void;
   patchText: (id: string, patch: Partial<TimedText>, history?: boolean) => void;
   deleteText: (id: string) => void;
 
+  addMusicTrack: (init: Parameters<typeof addMusic>[1]) => void;
+  patchMusic: (id: string, patch: Partial<MusicTrack>, history?: boolean) => void;
+  deleteMusic: (id: string) => void;
+
   selectClip: (index: number | null) => void;
   selectText: (id: string | null) => void;
+  selectMusic: (id: string | null) => void;
 
   beginStroke: () => void;
   endStroke: () => void;
@@ -72,12 +87,13 @@ interface TimelineState {
 
 export const useTimeline = create<TimelineState>((set, get) => {
   /** Apply a clips/texts change with a history checkpoint. */
-  function commit(mutate: (p: Project) => Partial<Pick<Project, "clips" | "texts">>) {
+  function commit(mutate: (p: Project) => Partial<Pick<Project, "clips" | "texts" | "music">>) {
     set((s) => {
       const changes = mutate(s.project);
       const changed =
         (changes.clips && changes.clips !== s.project.clips) ||
-        (changes.texts && changes.texts !== s.project.texts);
+        (changes.texts && changes.texts !== s.project.texts) ||
+        (changes.music && changes.music !== s.project.music);
       if (!changed) return s;
       return {
         past: [...s.past, snap(s.project)].slice(-MAX_HISTORY),
@@ -87,12 +103,18 @@ export const useTimeline = create<TimelineState>((set, get) => {
     });
   }
 
+  /** Live (no-history) project patch for slider drags. */
+  function live(mutate: (p: Project) => Partial<Pick<Project, "clips" | "texts" | "music">>) {
+    set((s) => ({ project: { ...s.project, ...mutate(s.project) } }));
+  }
+
   return {
     project: emptyProject(),
     past: [],
     future: [],
     selectedClipIndex: null,
     selectedTextId: null,
+    selectedMusicId: null,
     _stroke: null,
 
     addAsset: (asset) =>
@@ -154,6 +176,31 @@ export const useTimeline = create<TimelineState>((set, get) => {
         }));
     },
 
+    setClipSpeed: (index, speed, history = true) => {
+      const mut = (p: Project) => ({ clips: setClipSpeed(p.clips, index, speed) });
+      history ? commit(mut) : live(mut);
+    },
+
+    setClipVolume: (index, volume, history = true) => {
+      const mut = (p: Project) => ({ clips: setClipVolume(p.clips, index, volume) });
+      history ? commit(mut) : live(mut);
+    },
+
+    addMusicTrack: (init) => {
+      commit((p) => ({ music: addMusic(p.music, init) }));
+      set((s) => ({ selectedMusicId: s.project.music[s.project.music.length - 1]?.id ?? null }));
+    },
+
+    patchMusic: (id, patch, history = true) => {
+      const mut = (p: Project) => ({ music: updateMusic(p.music, id, patch) });
+      history ? commit(mut) : live(mut);
+    },
+
+    deleteMusic: (id) => {
+      commit((p) => ({ music: removeMusic(p.music, id) }));
+      set((s) => (s.selectedMusicId === id ? { selectedMusicId: null } : s));
+    },
+
     addTextAt: (t) => {
       commit((p) => ({ texts: addText(p.texts, t, totalDuration(p.clips)) }));
       set((s) => ({
@@ -174,15 +221,21 @@ export const useTimeline = create<TimelineState>((set, get) => {
       set((s) => (s.selectedTextId === id ? { selectedTextId: null } : s));
     },
 
-    selectClip: (selectedClipIndex) => set({ selectedClipIndex, selectedTextId: null }),
-    selectText: (selectedTextId) => set({ selectedTextId, selectedClipIndex: null }),
+    selectClip: (selectedClipIndex) =>
+      set({ selectedClipIndex, selectedTextId: null, selectedMusicId: null }),
+    selectText: (selectedTextId) =>
+      set({ selectedTextId, selectedClipIndex: null, selectedMusicId: null }),
+    selectMusic: (selectedMusicId) =>
+      set({ selectedMusicId, selectedClipIndex: null, selectedTextId: null }),
 
     beginStroke: () => set((s) => ({ _stroke: snap(s.project) })),
     endStroke: () =>
       set((s) => {
         if (!s._stroke) return { _stroke: null };
         const changed =
-          s._stroke.clips !== s.project.clips || s._stroke.texts !== s.project.texts;
+          s._stroke.clips !== s.project.clips ||
+          s._stroke.texts !== s.project.texts ||
+          s._stroke.music !== s.project.music;
         if (!changed) return { _stroke: null };
         return {
           past: [...s.past, s._stroke].slice(-MAX_HISTORY),
@@ -201,6 +254,7 @@ export const useTimeline = create<TimelineState>((set, get) => {
           project: { ...s.project, ...prev },
           selectedClipIndex: null,
           selectedTextId: null,
+          selectedMusicId: null,
         };
       }),
 
@@ -214,18 +268,22 @@ export const useTimeline = create<TimelineState>((set, get) => {
           project: { ...s.project, ...next },
           selectedClipIndex: null,
           selectedTextId: null,
+          selectedMusicId: null,
         };
       }),
 
     reset: () => {
-      // Revoke asset object URLs before dropping them (session hygiene).
-      for (const a of Object.values(get().project.assets)) URL.revokeObjectURL(a.url);
+      // Revoke asset + music object URLs before dropping them (session hygiene).
+      const p = get().project;
+      for (const a of Object.values(p.assets)) URL.revokeObjectURL(a.url);
+      for (const m of p.music) URL.revokeObjectURL(m.url);
       set({
         project: emptyProject(),
         past: [],
         future: [],
         selectedClipIndex: null,
         selectedTextId: null,
+        selectedMusicId: null,
         _stroke: null,
       });
     },
@@ -243,6 +301,7 @@ export const useTimeline = create<TimelineState>((set, get) => {
         assets: { ...s.project.assets, [asset.id]: asset },
         clips: appendClip(s.project.clips, asset),
         texts: s.project.texts,
+        music: s.project.music,
       },
       selectedClipIndex: s.project.clips.length, // select the new clip
     }));

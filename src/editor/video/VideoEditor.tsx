@@ -18,6 +18,7 @@ import { useTimeline } from "./timeline/store";
 import { totalDuration, effectiveTransition, type TransitionType, type TextAnimation } from "./timeline/model";
 import { MultiTimeline } from "./timeline/MultiTimeline";
 import { EffectsPanel } from "./panels/EffectsPanel";
+import { AudioPanel } from "./panels/AudioPanel";
 import "../photo/photo-editor.css";
 import "./video-editor.css";
 
@@ -356,18 +357,16 @@ export function VideoEditor({ media, onClose }: Props) {
     { id: "reframe", label: "Reframe", icon: "▭" },
     { id: "rotate", label: "Rotate", icon: "⟳" },
     { id: "gif", label: "GIF", icon: "◉", disabled: !singleClipOnly, hint: "Single-clip timelines only (for now)" },
-    { id: "audio", label: "Audio", icon: "♪", disabled: !singleClipOnly, hint: "Single-clip timelines only (for now)" },
+    { id: "audio", label: "Audio", icon: "♪" },
     { id: "frame", label: "Frame", icon: "⧉" },
   ];
 
   const primary =
     mode === "gif"
       ? { label: "Export GIF", run: runGif, disabled: !singleClipOnly }
-      : mode === "audio"
-        ? { label: "Extract audio (WAV)", run: runAudio, disabled: !singleClipOnly }
-        : mode === "frame"
-          ? { label: "Save current frame", run: runFrame, disabled: !project.clips.length }
-          : { label: `Export ${container.toUpperCase()}`, run: runExport, disabled: !project.clips.length };
+      : mode === "frame"
+        ? { label: "Save current frame", run: runFrame, disabled: !project.clips.length }
+        : { label: `Export ${container.toUpperCase()}`, run: runExport, disabled: !project.clips.length };
 
   return (
     <div className="pe-root vt-root">
@@ -485,10 +484,7 @@ export function VideoEditor({ media, onClose }: Props) {
           </div>
         )}
         {mode === "audio" && (
-          <div className="ed-panel">
-            <div className="ed-panel__head"><h3>Extract audio</h3></div>
-            <p className="ed-panel__hint">Saves the clip’s audio (trim applied) as WAV — works in every browser.</p>
-          </div>
+          <AudioPanel canExtract={singleClipOnly} onExtractAudio={runAudio} timelineDuration={duration} />
         )}
         {mode === "frame" && (
           <div className="ed-panel">
@@ -592,10 +588,16 @@ function ClipsPanel(props: {
   const deleteClip = useTimeline((s) => s.deleteClip);
   const moveClipBy = useTimeline((s) => s.moveClipBy);
   const setClipTransition = useTimeline((s) => s.setClipTransition);
+  const setClipSpeed = useTimeline((s) => s.setClipSpeed);
+  const setClipVolume = useTimeline((s) => s.setClipVolume);
+  const beginStroke = useTimeline((s) => s.beginStroke);
+  const endStroke = useTimeline((s) => s.endStroke);
 
   const clip = selectedClipIndex !== null ? project.clips[selectedClipIndex] : undefined;
   const trans = clip?.transitionAfter;
   const isLast = selectedClipIndex === project.clips.length - 1;
+  const hasAudio = clip ? Boolean(project.assets[clip.assetId]?.hasAudio) : false;
+  const SPEEDS = [0.25, 0.5, 1, 1.5, 2, 4];
 
   return (
     <div className="ed-panel">
@@ -616,6 +618,25 @@ function ClipsPanel(props: {
             <button className="k-btn k-btn-ghost ed-btn-sm" onClick={() => moveClipBy(selectedClipIndex, 1)} disabled={isLast}>Move ▶</button>
             <button className="k-btn k-btn-ghost ed-btn-sm" onClick={() => deleteClip(selectedClipIndex)} disabled={project.clips.length <= 1}>🗑 Delete</button>
           </div>
+
+          <div className="ed-panel__section">
+            <span className="ed-slider__label">Speed — {clip.speed}×</span>
+            <div className="ed-btnrow">
+              {SPEEDS.map((sp) => (
+                <button key={sp} className={`k-btn k-btn-ghost ed-btn-sm ${clip.speed === sp ? "is-active" : ""}`}
+                  onClick={() => setClipSpeed(selectedClipIndex, sp)}>{sp}×</button>
+              ))}
+            </div>
+            <p className="ed-panel__hint">Audio speed keeps its pitch. Speed changes this clip’s length on the timeline.</p>
+          </div>
+
+          {hasAudio && (
+            <label className="ed-field-col">Clip volume — {Math.round(clip.volume * 100)}%
+              <input type="range" min={0} max={2} step={0.05} value={clip.volume}
+                onPointerDown={beginStroke} onPointerUp={endStroke}
+                onChange={(e) => setClipVolume(selectedClipIndex, Number(e.target.value), false)} />
+            </label>
+          )}
           {!isLast && trans && (
             <>
               <label className="ed-field-col">Transition to next clip
