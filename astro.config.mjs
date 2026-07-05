@@ -22,6 +22,12 @@ export default defineConfig({
   ],
   vite: {
     plugins: [tailwindcss()],
+    // Force a single React instance across the app and react-konva. Without this,
+    // a mid-session dep re-optimization could hand react-konva a second React copy,
+    // and its hooks would throw "Cannot read properties of null (reading 'useRef')".
+    resolve: {
+      dedupe: ["react", "react-dom", "react/jsx-runtime"],
+    },
     // Pre-bundle every editor dependency at dev-server start. Without this, Vite
     // discovers zustand/react-konva/etc. only when the lazy PhotoEditor/VideoEditor
     // chunk first loads, triggers a mid-session re-optimization, and in-flight
@@ -32,6 +38,7 @@ export default defineConfig({
         "react",
         "react-dom",
         "react-dom/client",
+        "react/jsx-runtime",
         "konva",
         "react-konva",
         "zustand",

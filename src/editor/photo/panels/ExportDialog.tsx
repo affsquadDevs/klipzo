@@ -106,23 +106,6 @@ export function ExportDialog({ open, onClose, getCanvas, originalName }: Props) 
         </div>
       </div>
 
-      <style>{`
-        .ed-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: grid; place-items: center; z-index: 60; padding: 1rem; }
-        .ed-modal { width: min(28rem, 100%); background: var(--color-surface); border: 1px solid var(--color-border);
-          border-radius: var(--radius-lg); box-shadow: var(--shadow-panel); overflow: hidden; }
-        .ed-modal__head, .ed-modal__foot { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.1rem; }
-        .ed-modal__head { border-bottom: 1px solid var(--color-border); }
-        .ed-modal__foot { border-top: 1px solid var(--color-border); gap: 0.5rem; }
-        .ed-modal__body { padding: 1.1rem; display: grid; gap: 1rem; }
-        .ed-segmented { display: flex; gap: 0.25rem; margin-top: 0.35rem; }
-        .ed-segmented button { flex: 1; padding: 0.45rem; border: 1px solid var(--color-border); background: var(--color-bg);
-          color: var(--color-fg-muted); border-radius: var(--radius-sm); cursor: pointer; font-size: 0.82rem; }
-        .ed-segmented button.is-active { border-color: var(--color-accent); color: var(--color-fg); box-shadow: inset 0 0 0 1px var(--color-accent); }
-        .ed-segmented button:disabled { opacity: 0.4; cursor: not-allowed; }
-        .ed-export-dims { font-size: 0.82rem; color: var(--color-fg-subtle); font-variant-numeric: tabular-nums; }
-        .ed-export-privacy { font-size: 0.78rem; color: var(--color-fg-subtle); line-height: 1.5; }
-        .ed-export-done { font-size: 0.82rem; color: var(--color-success); }
-      `}</style>
     </div>
   );
 }

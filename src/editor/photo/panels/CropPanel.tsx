@@ -69,14 +69,6 @@ export function CropPanel({ cropRect, setCropRect, aspectId, setAspectId }: Prop
         <button className="k-btn k-btn-ghost ed-btn-sm" onClick={resetCrop}>Reset</button>
         <button className="k-btn k-btn-primary ed-btn-sm" onClick={applyCrop}>Apply crop</button>
       </div>
-      <style>{`
-        .ed-aspectgrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.4rem; }
-        .ed-aspectchip { padding: 0.45rem 0.5rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm);
-          background: var(--color-surface); color: var(--color-fg-muted); font-size: 0.78rem; cursor: pointer; text-align: left; }
-        .ed-aspectchip:hover { border-color: var(--color-accent); color: var(--color-fg); }
-        .ed-aspectchip.is-active { border-color: var(--color-accent); color: var(--color-fg); box-shadow: inset 0 0 0 1px var(--color-accent); }
-        .ed-cropdims { margin: 0.75rem 0; font-size: 0.82rem; color: var(--color-fg-subtle); font-variant-numeric: tabular-nums; }
-      `}</style>
     </div>
   );
 }
