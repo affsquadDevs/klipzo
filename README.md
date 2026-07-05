@@ -125,13 +125,23 @@ Node 20+ recommended.
 
 ## Build phases (see the brief §11 / the task list)
 
-1. ✅ Scaffold + content shell (this commit)
-2. Photo editor v1
-3. Video engine + timeline v1
-4. SEO layer (tool pages, guides, structured data, sitemap, llms.txt)
-5. Trust / E-E-A-T pages
-6. Monetization + compliance (AdSlot, CMP, Consent Mode v2, GA4/GTM)
-7. QA & launch (Lighthouse, schema validation, privacy audit, cross-browser)
+1. ✅ Scaffold + content shell
+2. ✅ Photo editor v1 — WebGL adjustments, filters, crop/rotate/resize, text/shapes/
+   draw, undo/redo, PNG/JPEG/WebP export with EXIF strip (verified in-browser)
+3. ✅ Video engine + timeline v1 — WebCodecs + Mediabunny (trim/reframe/rotate/convert),
+   GIF, frame capture, WAV audio extract, capability detection, progress + cancel
+   (verified: WebM → 25 KB MP4, 100 KB GIF, PNG frame in-browser)
+4. ✅ SEO layer — 20 unique tool pages, 6 guides, structured data, sitemap, llms.txt
+5. ✅ Trust / E-E-A-T pages — how-it-works, privacy, about, editorial, terms, disclaimer, contact
+6. ✅ Monetization + compliance — AdSlot, Consent Mode v2 banner, GA4/GTM, ads.txt
+7. ✅ QA & launch — `npm run qa` (secrets, links, canonicals, JSON-LD, bundle isolation);
+   privacy network audit (zero media upload — all traffic local/`blob:`)
 
-See [`CONFIG-TODO.md`](CONFIG-TODO.md) for the launch checklist and the AdSense
-application sequencing (apply only after content + policy pages are live).
+### Remaining before going live
+
+Fill the placeholders in [`CONFIG-TODO.md`](CONFIG-TODO.md) (ad/analytics IDs, author,
+org, contact), add the image assets (OG image, logo, PWA/author photos), connect a
+certified CMP for EEA personalized ads, and run Lighthouse on the deployed content
+pages. Apply for AdSense **only after** content + policy pages are live.
+
+Run `npm run qa` any time to re-verify the static guarantees.

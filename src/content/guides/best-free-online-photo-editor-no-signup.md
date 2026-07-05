@@ -36,7 +36,7 @@ The single most important thing to look for is where the processing happens. The
 - **Server-side:** you upload, their computer edits, you download. This needs an account or at least a session on their server, and your photo sits on someone else's machine, even if only briefly.
 - **Client-side (in-browser):** your browser does the work using your device's own processor and graphics. Nothing is uploaded.
 
-Klipzo is fully client-side. Photos are edited using the browser's Canvas and WebGL, right on your device. Because there is no server doing the work, there is no reason to make you sign up, and there is nothing to store elsewhere. If you want the deeper technical explanation, see our guide on [how browser editing keeps your files private](/how-browser-editing-keeps-files-private).
+Klipzo is fully client-side. Photos are edited using the browser's Canvas and WebGL, right on your device. Because there is no server doing the work, there is no reason to make you sign up, and there is nothing to store elsewhere. If you want the deeper technical explanation, see our guide on [how browser editing keeps your files private](/guides/how-browser-editing-keeps-files-private).
 
 ## The everyday tools you should expect
 

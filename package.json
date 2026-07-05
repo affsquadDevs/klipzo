@@ -11,6 +11,7 @@
     "preview": "astro preview",
     "check": "astro check",
     "typecheck": "tsc --noEmit",
+    "qa": "astro build && node scripts/qa-audit.mjs",
     "format": "prettier --write ."
   },
   "dependencies": {
