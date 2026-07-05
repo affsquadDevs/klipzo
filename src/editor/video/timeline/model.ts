@@ -1,0 +1,336 @@
+/**
+ * Multi-clip timeline data model (Phase A). Pure types + pure functions — no DOM,
+ * no React — so timeline math (transition overlap, time mapping, clip ops) is
+ * deterministic and unit-testable. The compositor and the preview engine both
+ * consume `computeSegments`, so export and preview can never disagree about when
+ * a clip is on screen.
+ *
+ * Time conventions:
+ *  - "source time"   = seconds within an asset's own media.
+ *  - "timeline time" = seconds on the output timeline (what the playhead shows).
+ */
+
+export interface SourceAsset {
+  id: string;
+  file: File;
+  /** Object URL for preview playback. Revoke on asset removal / session clear. */
+  url: string;
+  duration: number;
+  width: number;
+  height: number;
+  hasAudio: boolean;
+}
+
+export type TransitionType = "none" | "crossfade" | "dip-to-black";
+
+export interface Transition {
+  type: TransitionType;
+  /** Requested duration in seconds; effective duration is clamped per-boundary. */
+  duration: number;
+}
+
+export interface Clip {
+  id: string;
+  assetId: string;
+  /** Source in-point (seconds, inclusive). */
+  in: number;
+  /** Source out-point (seconds, exclusive). Always > in. */
+  out: number;
+  /** Transition into the NEXT clip. Ignored on the last clip. */
+  transitionAfter: Transition;
+}
+
+export interface TimedText {
+  id: string;
+  text: string;
+  /** Timeline seconds. */
+  start: number;
+  end: number;
+  /** Center-anchored position as fractions of the output frame (0..1). */
+  x: number;
+  y: number;
+  /** Font size as a fraction of output height (0.02..0.25). */
+  size: number;
+  color: string;
+  bold: boolean;
+  outline: boolean;
+  shadow: boolean;
+  /** Keyframed opacity ramps, seconds. 0 = hard cut. */
+  fadeIn: number;
+  fadeOut: number;
+}
+
+export interface Project {
+  assets: Record<string, SourceAsset>;
+  clips: Clip[];
+  texts: TimedText[];
+}
+
+export const MIN_CLIP_LEN = 0.1;
+
+let counter = 0;
+export function newId(prefix: string): string {
+  counter += 1;
+  return `${prefix}-${counter}-${(counter * 2654435761) >>> 0}`;
+}
+
+export function emptyProject(): Project {
+  return { assets: {}, clips: [], texts: [] };
+}
+
+export function clipDuration(clip: Clip): number {
+  return clip.out - clip.in;
+}
+
+/* ------------------------------------------------------------------ *
+ * Segments: where each clip sits on the output timeline.
+ * Crossfade overlaps the incoming clip by `overlapIn` seconds;
+ * dip-to-black is sequential (no overlap) — half the duration fades the
+ * outgoing clip to black, half fades the incoming clip from black.
+ * ------------------------------------------------------------------ */
+
+export interface Segment {
+  clip: Clip;
+  index: number;
+  /** Timeline time at which this clip starts rendering. */
+  start: number;
+  /** Timeline time at which this clip stops rendering (start + clip duration). */
+  end: number;
+  /** Seconds of crossfade overlap with the PREVIOUS clip (0 if none). */
+  overlapIn: number;
+}
+
+/** Effective transition duration at the boundary after clip i (clamped so it never
+ *  exceeds half of either neighbour). */
+export function effectiveTransition(clips: Clip[], i: number): Transition {
+  const clip = clips[i];
+  const next = clips[i + 1];
+  if (!clip || !next) return { type: "none", duration: 0 };
+  const t = clip.transitionAfter;
+  if (t.type === "none" || t.duration <= 0) return { type: "none", duration: 0 };
+  const maxDur = Math.min(clipDuration(clip) / 2, clipDuration(next) / 2);
+  return { type: t.type, duration: Math.max(0, Math.min(t.duration, maxDur)) };
+}
+
+export function computeSegments(clips: Clip[]): Segment[] {
+  const segments: Segment[] = [];
+  let cursor = 0;
+  for (let i = 0; i < clips.length; i++) {
+    const clip = clips[i]!;
+    let overlapIn = 0;
+    if (i > 0) {
+      const prevT = effectiveTransition(clips, i - 1);
+      if (prevT.type === "crossfade") overlapIn = prevT.duration;
+    }
+    const start = cursor - overlapIn;
+    const end = start + clipDuration(clip);
+    segments.push({ clip, index: i, start, end, overlapIn });
+    cursor = end;
+  }
+  return segments;
+}
+
+export function totalDuration(clips: Clip[]): number {
+  const segs = computeSegments(clips);
+  return segs.length ? segs[segs.length - 1]!.end : 0;
+}
+
+/** Map timeline time → source time within a segment's asset. */
+export function sourceTime(seg: Segment, t: number): number {
+  return seg.clip.in + (t - seg.start);
+}
+
+/**
+ * What to draw at timeline time `t`: the base clip, plus (during a crossfade
+ * window) the incoming clip with `incomingAlpha` ramping 0→1, plus a black
+ * overlay for dip-to-black boundaries.
+ */
+export interface FrameLayers {
+  base: Segment | null;
+  incoming: Segment | null;
+  incomingAlpha: number;
+  blackAlpha: number;
+}
+
+export function layersAt(clips: Clip[], t: number): FrameLayers {
+  const segs = computeSegments(clips);
+  const out: FrameLayers = { base: null, incoming: null, incomingAlpha: 0, blackAlpha: 0 };
+  if (!segs.length) return out;
+
+  const active = segs.filter((s) => t >= s.start && t < s.end);
+  if (!active.length) {
+    // Past the end (or exactly at the end frame): hold the last clip.
+    const last = segs[segs.length - 1]!;
+    if (t >= last.end) out.base = last;
+    else out.base = segs[0]!;
+    return out;
+  }
+
+  out.base = active[0]!;
+  if (active.length > 1) {
+    // Crossfade window: the later segment fades in over its overlap region.
+    const inc = active[active.length - 1]!;
+    out.incoming = inc;
+    out.incomingAlpha = inc.overlapIn > 0 ? Math.min(1, (t - inc.start) / inc.overlapIn) : 1;
+  }
+
+  // Dip-to-black: outgoing half after `base`, incoming half before it.
+  const base = out.base;
+  const tAfter = effectiveTransition(clips, base.index);
+  if (tAfter.type === "dip-to-black" && tAfter.duration > 0) {
+    const half = tAfter.duration / 2;
+    if (t > base.end - half) out.blackAlpha = Math.max(out.blackAlpha, (t - (base.end - half)) / half);
+  }
+  if (base.index > 0) {
+    const tBefore = effectiveTransition(clips, base.index - 1);
+    if (tBefore.type === "dip-to-black" && tBefore.duration > 0) {
+      const half = tBefore.duration / 2;
+      if (t < base.start + half) out.blackAlpha = Math.max(out.blackAlpha, 1 - (t - base.start) / half);
+    }
+  }
+  out.blackAlpha = Math.min(1, Math.max(0, out.blackAlpha));
+  return out;
+}
+
+/* ------------------------------------------------------------------ *
+ * Keyframe interpolation (linear). Transitions and text fades both run
+ * through this so easing behaviour stays consistent.
+ * ------------------------------------------------------------------ */
+
+export interface Keyframe {
+  t: number;
+  v: number;
+}
+
+export function interpolate(keyframes: Keyframe[], t: number): number {
+  if (!keyframes.length) return 0;
+  const first = keyframes[0]!;
+  const last = keyframes[keyframes.length - 1]!;
+  if (t <= first.t) return first.v;
+  if (t >= last.t) return last.v;
+  for (let i = 0; i < keyframes.length - 1; i++) {
+    const a = keyframes[i]!;
+    const b = keyframes[i + 1]!;
+    if (t >= a.t && t <= b.t) {
+      const f = b.t === a.t ? 1 : (t - a.t) / (b.t - a.t);
+      return a.v + (b.v - a.v) * f;
+    }
+  }
+  return last.v;
+}
+
+/** Opacity of a timed text at timeline time t (0 outside its range, fade ramps inside). */
+export function textOpacityAt(text: TimedText, t: number): number {
+  if (t < text.start || t > text.end) return 0;
+  const dur = text.end - text.start;
+  const fi = Math.min(text.fadeIn, dur / 2);
+  const fo = Math.min(text.fadeOut, dur / 2);
+  const keys: Keyframe[] = [
+    { t: text.start, v: fi > 0 ? 0 : 1 },
+    { t: text.start + fi, v: 1 },
+    { t: text.end - fo, v: 1 },
+    { t: text.end, v: fo > 0 ? 0 : 1 },
+  ];
+  return interpolate(keys, t);
+}
+
+/* ------------------------------------------------------------------ *
+ * Clip operations — all pure: return new arrays, never mutate.
+ * ------------------------------------------------------------------ */
+
+export function appendClip(clips: Clip[], asset: SourceAsset): Clip[] {
+  const clip: Clip = {
+    id: newId("clip"),
+    assetId: asset.id,
+    in: 0,
+    out: Math.max(MIN_CLIP_LEN, asset.duration),
+    transitionAfter: { type: "none", duration: 0.5 },
+  };
+  return [...clips, clip];
+}
+
+/** Split the clip under timeline time `t` into two clips at that point. */
+export function splitAt(clips: Clip[], t: number): Clip[] {
+  const segs = computeSegments(clips);
+  const seg = segs.find((s) => t > s.start + MIN_CLIP_LEN && t < s.end - MIN_CLIP_LEN);
+  if (!seg) return clips;
+  const srcT = sourceTime(seg, t);
+  const a: Clip = { ...seg.clip, id: newId("clip"), out: srcT, transitionAfter: { type: "none", duration: 0.5 } };
+  const b: Clip = { ...seg.clip, id: newId("clip"), in: srcT };
+  const next = [...clips];
+  next.splice(seg.index, 1, a, b);
+  return next;
+}
+
+export function removeClip(clips: Clip[], index: number): Clip[] {
+  if (index < 0 || index >= clips.length) return clips;
+  const next = [...clips];
+  next.splice(index, 1);
+  return next;
+}
+
+export function moveClip(clips: Clip[], index: number, dir: -1 | 1): Clip[] {
+  const j = index + dir;
+  if (index < 0 || index >= clips.length || j < 0 || j >= clips.length) return clips;
+  const next = [...clips];
+  const [c] = next.splice(index, 1);
+  next.splice(j, 0, c!);
+  return next;
+}
+
+export function setClipTrim(
+  clips: Clip[],
+  index: number,
+  inT: number,
+  outT: number,
+  assetDuration: number,
+): Clip[] {
+  const clip = clips[index];
+  if (!clip) return clips;
+  const nIn = Math.max(0, Math.min(inT, assetDuration - MIN_CLIP_LEN));
+  const nOut = Math.max(nIn + MIN_CLIP_LEN, Math.min(outT, assetDuration));
+  const next = [...clips];
+  next[index] = { ...clip, in: nIn, out: nOut };
+  return next;
+}
+
+export function setTransition(clips: Clip[], index: number, transition: Transition): Clip[] {
+  const clip = clips[index];
+  if (!clip) return clips;
+  const next = [...clips];
+  next[index] = { ...clip, transitionAfter: { ...transition } };
+  return next;
+}
+
+/* ------------------------------------------------------------------ *
+ * Text operations
+ * ------------------------------------------------------------------ */
+
+export function addText(texts: TimedText[], at: number, timelineEnd: number): TimedText[] {
+  const start = Math.max(0, Math.min(at, Math.max(0, timelineEnd - 0.5)));
+  const end = Math.min(timelineEnd || start + 3, start + 3);
+  const t: TimedText = {
+    id: newId("text"),
+    text: "Your text",
+    start,
+    end: Math.max(end, start + 0.5),
+    x: 0.5,
+    y: 0.82,
+    size: 0.07,
+    color: "#ffffff",
+    bold: true,
+    outline: true,
+    shadow: true,
+    fadeIn: 0.2,
+    fadeOut: 0.2,
+  };
+  return [...texts, t];
+}
+
+export function updateText(texts: TimedText[], id: string, patch: Partial<TimedText>): TimedText[] {
+  return texts.map((t) => (t.id === id ? { ...t, ...patch } : t));
+}
+
+export function removeText(texts: TimedText[], id: string): TimedText[] {
+  return texts.filter((t) => t.id !== id);
+}
