@@ -33,6 +33,24 @@ const video = VIDEO_TOOLS.filter((tool) => tool.status === "v1");
     </nav>
 
     <a href="/editor" class="k-btn k-btn-primary k-header__cta">{t("nav.editor")}</a>
+
+    {/* Mobile menu — the desktop nav is hidden below 860px; without this the
+        tool/guide pages were unreachable from the header on phones. */}
+    <details class="k-menu k-mobilemenu">
+      <summary aria-label={t("nav.menu")}>
+        <span class="k-mobilemenu__icon" aria-hidden>☰</span>
+      </summary>
+      <div class="k-menu__panel k-mobilemenu__panel">
+        <p class="k-mobilemenu__group">{t("nav.photoTools")}</p>
+        {photo.map((tool) => <a href={`/${tool.slug}`}>{tool.label}</a>)}
+        <p class="k-mobilemenu__group">{t("nav.videoTools")}</p>
+        {video.map((tool) => <a href={`/${tool.slug}`}>{tool.label}</a>)}
+        <p class="k-mobilemenu__group">More</p>
+        <a href="/guides">{t("nav.guides")}</a>
+        <a href="/how-it-works">{t("nav.howItWorks")}</a>
+        <a href="/about">{t("nav.about")}</a>
+      </div>
+    </details>
   </div>
 </header>
 
@@ -131,12 +149,46 @@ const video = VIDEO_TOOLS.filter((tool) => tool.status === "v1");
     margin-left: auto;
   }
 
+  /* Mobile menu */
+  .k-mobilemenu {
+    margin-left: 0.25rem;
+  }
+  .k-mobilemenu > summary {
+    display: grid;
+    place-items: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    padding: 0;
+    font-size: 1.15rem;
+    color: var(--color-fg);
+  }
+  .k-mobilemenu__panel {
+    position: fixed;
+    left: 0.5rem;
+    right: 0.5rem;
+    top: calc(var(--spacing-toolbar) + 0.4rem);
+    max-height: calc(100dvh - var(--spacing-toolbar) - 1.5rem);
+    overflow-y: auto;
+    min-width: 0;
+  }
+  .k-mobilemenu__group {
+    padding: 0.65rem 0.6rem 0.25rem;
+    font-size: 0.7rem;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--color-fg-subtle);
+  }
+
   @media (min-width: 860px) {
     .k-nav {
       display: flex;
     }
     .k-header__cta {
       margin-left: 0.5rem;
+    }
+    .k-mobilemenu {
+      display: none;
     }
   }
 </style>

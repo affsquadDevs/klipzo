@@ -64,6 +64,42 @@ function makeInput(file: Blob): Input {
 }
 
 /**
+ * Run conversion.execute() with a HARD abort guarantee. conversion.cancel() is
+ * supposed to make execute() throw, but when cancel lands at/before encode start,
+ * execute() can simply never settle — which left the export modal hung at 0% forever
+ * (confirmed by adversarial QA). Racing against the AbortSignal guarantees the caller
+ * always gets an AbortError promptly; the late execute() rejection (if any) is
+ * swallowed so it can't surface as an unhandled rejection.
+ */
+async function executeWithAbort(conversion: Conversion, signal?: AbortSignal): Promise<void> {
+  // Ask mediabunny to stop doing work as soon as the signal fires.
+  if (signal) {
+    if (signal.aborted) void conversion.cancel();
+    else signal.addEventListener("abort", () => void conversion.cancel(), { once: true });
+  }
+
+  const exec = conversion.execute();
+  if (!signal) return exec;
+
+  let onAbort: (() => void) | null = null;
+  try {
+    await Promise.race([
+      exec,
+      new Promise<never>((_, reject) => {
+        onAbort = () => reject(new DOMException("Export cancelled", "AbortError"));
+        if (signal.aborted) onAbort();
+        else signal.addEventListener("abort", onAbort, { once: true });
+      }),
+    ]);
+  } finally {
+    if (onAbort) signal.removeEventListener("abort", onAbort);
+    // If we bailed out via abort, the (possibly never-settling) execute promise must
+    // not produce an unhandled rejection later.
+    exec.catch(() => {});
+  }
+}
+
+/**
  * Convert / trim / reframe / rotate a video. Resolves to a Blob, throws
  * UnsupportedExportError if the browser can't encode the target, or ConversionCanceledError
  * if aborted.
@@ -97,6 +133,10 @@ export async function exportVideo(
       height: opts.height,
       fit: opts.width || opts.height ? (opts.fit ?? "contain") : undefined,
       rotate: opts.rotate,
+      // Bake rotation into the pixels instead of writing a container rotation
+      // matrix — the UI promises "stays correct in every player", and legacy /
+      // matrix-ignoring players would otherwise show the video unrotated.
+      allowRotationMetadata: false,
       frameRate: opts.frameRate,
       bitrate: QUALITY_MAP[opts.quality],
     },
@@ -111,12 +151,8 @@ export async function exportVideo(
   }
 
   if (onProgress) conversion.onProgress = (p) => onProgress(p);
-  if (signal) {
-    if (signal.aborted) void conversion.cancel();
-    signal.addEventListener("abort", () => void conversion.cancel(), { once: true });
-  }
 
-  await conversion.execute();
+  await executeWithAbort(conversion, signal);
   const buffer = (output.target as BufferTarget).buffer;
   if (!buffer) throw new Error("Export produced no output.");
   return new Blob([buffer], { type: mime(opts.container) });
@@ -143,9 +179,8 @@ export async function extractAudioWav(
     throw new UnsupportedExportError("Couldn’t read an audio track to extract from this file.");
   }
   if (onProgress) conversion.onProgress = (p) => onProgress(p);
-  if (signal) signal.addEventListener("abort", () => void conversion.cancel(), { once: true });
 
-  await conversion.execute();
+  await executeWithAbort(conversion, signal);
   const buffer = (output.target as BufferTarget).buffer;
   if (!buffer) throw new Error("Audio extraction produced no output.");
   return new Blob([buffer], { type: "audio/wav" });

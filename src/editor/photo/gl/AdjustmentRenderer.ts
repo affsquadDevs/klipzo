@@ -76,7 +76,8 @@ uniform float u_temperature, u_tint, u_highlights, u_shadows, u_sharpen;
 float luma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
 
 void main() {
-  vec3 col = texture2D(u_tex, v_uv).rgb;
+  vec4 tex = texture2D(u_tex, v_uv);
+  vec3 col = tex.rgb;
 
   // Unsharp mask (3x3 neighbours).
   if (u_sharpen > 0.001) {
@@ -118,7 +119,9 @@ void main() {
   float g2 = luma(col);
   col = mix(vec3(g2), col, 1.0 + u_vibrance * (1.0 - sat));
 
-  gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
+  // Preserve source alpha — hard-coding 1.0 here rendered transparent PNG regions
+  // as opaque black on the canvas and baked black into exports.
+  gl_FragColor = vec4(clamp(col, 0.0, 1.0), tex.a);
 }
 `;
 

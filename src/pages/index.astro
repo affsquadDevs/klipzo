@@ -6,7 +6,7 @@ import AdSlot from "../components/monetization/AdSlot.astro";
 import { t } from "../i18n";
 import { SITE } from "../config/site";
 import { PHOTO_TOOLS, VIDEO_TOOLS } from "../lib/tools";
-import { graph, organizationSchema, websiteSchema, webApplicationSchema, faqSchema } from "../lib/seo";
+import { organizationSchema, websiteSchema, webApplicationSchema, faqSchema } from "../lib/seo";
 import type { FaqItem } from "../lib/seo";
 
 const faqs: FaqItem[] = [
@@ -37,7 +37,9 @@ const faqs: FaqItem[] = [
   },
 ];
 
-const schema = graph(
+// Plain node array — <Seo>/<JsonLd> wraps it in a single @graph. Wrapping with
+// graph() here produced a doubly-nested @graph on the homepage.
+const schema = [
   organizationSchema(),
   websiteSchema(),
   webApplicationSchema({
@@ -51,10 +53,10 @@ const schema = graph(
     ],
   }),
   faqSchema(faqs),
-);
+];
 ---
 
-<BaseLayout title={`${SITE.brand} — Free In-Browser Photo & Video Editor`} description={SITE.description} theme="light" schema={[schema]}>
+<BaseLayout title={`${SITE.brand} — Free In-Browser Photo & Video Editor`} description={SITE.description} theme="light" schema={schema}>
   <!-- Hero -->
   <section class="k-hero">
     <div class="k-container">

@@ -61,6 +61,7 @@ export function VideoEditor({ media, onClose }: Props) {
   const [task, setTask] = useState<{ label: string; progress: number } | null>(null);
   const [result, setResult] = useState<{ name: string; size: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -72,11 +73,44 @@ export function VideoEditor({ media, onClose }: Props) {
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-    const onMeta = () => {
+    let fixingDuration = false;
+
+    const applyDuration = () => {
       setDuration(v.duration);
       setTrim({ start: 0, end: v.duration });
     };
+    const onDurationChange = () => {
+      // Second half of the Infinity-duration fix below.
+      if (fixingDuration && Number.isFinite(v.duration) && v.duration > 0) {
+        fixingDuration = false;
+        v.currentTime = 0;
+        applyDuration();
+      }
+    };
+    const onMeta = () => {
+      if (!Number.isFinite(v.duration) || v.duration <= 0) {
+        // MediaRecorder-produced WebM (every in-browser screen/webcam recording)
+        // reports duration=Infinity until the browser is forced to scan the file.
+        // Seeking far past the end triggers that scan; durationchange then fires
+        // with the real value. Without this the timeline read 0:00 / 0:00.
+        fixingDuration = true;
+        v.currentTime = 1e101;
+        return;
+      }
+      applyDuration();
+    };
+    const onError = () => {
+      const messages: Record<number, string> = {
+        3: "This video is damaged or uses a codec your browser can’t decode.",
+        4: "This file doesn’t look like a playable video — it may be corrupt or use an unsupported format.",
+      };
+      setLoadError(
+        messages[v.error?.code ?? 0] ??
+          "This video couldn’t be opened. It may be corrupt or unsupported in this browser.",
+      );
+    };
     const onTime = () => {
+      if (fixingDuration) return; // ignore the far-seek used by the duration fix
       setCurrent(v.currentTime);
       // Loop within the trim range during preview.
       if (v.currentTime >= trimRef.current.end && trimRef.current.end > 0) {
@@ -85,13 +119,18 @@ export function VideoEditor({ media, onClose }: Props) {
       }
     };
     v.addEventListener("loadedmetadata", onMeta);
+    v.addEventListener("durationchange", onDurationChange);
+    v.addEventListener("error", onError);
     v.addEventListener("timeupdate", onTime);
     v.addEventListener("play", () => setPlaying(true));
     v.addEventListener("pause", () => setPlaying(false));
-    // Metadata may already be loaded (fast local blob) before this listener attached.
-    if (v.readyState >= 1 && Number.isFinite(v.duration) && v.duration > 0) onMeta();
+    // Metadata (or a decode error) may already have landed before we attached.
+    if (v.readyState >= 1) onMeta();
+    if (v.error) onError();
     return () => {
       v.removeEventListener("loadedmetadata", onMeta);
+      v.removeEventListener("durationchange", onDurationChange);
+      v.removeEventListener("error", onError);
       v.removeEventListener("timeupdate", onTime);
     };
   }, []);
@@ -236,6 +275,26 @@ export function VideoEditor({ media, onClose }: Props) {
     audio: { label: "Extract audio (WAV)", run: () => run("audio") },
     frame: { label: "Save current frame", run: () => run("frame") },
   };
+
+  // A file the browser can't decode gets an honest error screen at import time
+  // instead of a silently broken editor with a black preview.
+  if (loadError) {
+    return (
+      <div style={{ display: "grid", placeItems: "center", width: "100%", padding: 24 }}>
+        <div style={{ display: "grid", gap: "0.75rem", maxWidth: 440, textAlign: "center", justifyItems: "center" }}>
+          <p style={{ fontSize: "1.05rem", fontWeight: 620, color: "var(--color-fg)" }}>
+            Couldn’t open that video
+          </p>
+          <p style={{ color: "var(--color-fg-muted)", fontSize: "0.9rem", lineHeight: 1.6 }}>
+            {loadError} Your file stayed on your device the whole time.
+          </p>
+          <button className="k-btn k-btn-primary" onClick={onClose}>
+            Choose a different file
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="pe-root vt-root">

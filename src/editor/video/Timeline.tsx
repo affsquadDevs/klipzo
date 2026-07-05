@@ -28,13 +28,23 @@ export function Timeline({ duration, current, trim, onSeek, onTrimChange }: Prop
 
   function onPointerDown(kind: "start" | "end" | "seek", e: React.PointerEvent) {
     e.preventDefault();
-    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    // Handles sit inside the track: without stopPropagation the track's own
+    // pointerdown fires next and overwrites the drag mode with "seek", turning
+    // every handle drag into a playhead scrub (confirmed by adversarial QA).
+    e.stopPropagation();
+    // setPointerCapture throws for a non-active pointer id — must not abort the drag.
+    try {
+      (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    } catch {
+      /* capture is a nicety, not required for the drag to work */
+    }
     dragging.current = kind;
     if (kind === "seek") onSeek(timeFromEvent(e.clientX));
   }
 
   function onPointerMove(e: React.PointerEvent) {
     if (!dragging.current) return;
+    e.stopPropagation();
     const t = timeFromEvent(e.clientX);
     if (dragging.current === "start") {
       onTrimChange({ start: Math.min(t, trim.end - 0.1), end: trim.end });

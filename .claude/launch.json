@@ -6,6 +6,36 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--", "--port", "4321"],
       "port": 4321
+    },
+    {
+      "name": "klipzo-qa-a",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "4322"],
+      "port": 4322
+    },
+    {
+      "name": "klipzo-qa-b",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "4323"],
+      "port": 4323
+    },
+    {
+      "name": "klipzo-qa-c",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "4324"],
+      "port": 4324
+    },
+    {
+      "name": "klipzo-qa-d",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "4325"],
+      "port": 4325
+    },
+    {
+      "name": "klipzo-qa-content",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "preview", "--", "--port", "4330"],
+      "port": 4330
     }
   ]
 }
