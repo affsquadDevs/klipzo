@@ -187,7 +187,10 @@ export function VideoEditor({ media, onClose }: Props) {
   function togglePlay() {
     const engine = engineRef.current;
     if (!engine) return;
-    if (playing) engine.pause();
+    // Read the engine's live state — the keyboard handler is bound once with []
+    // deps, so a React `playing` closure would be stale and Space could only ever
+    // start playback, never pause it.
+    if (engine.isPlaying) engine.pause();
     else void engine.play();
   }
 
@@ -673,11 +676,15 @@ function TextPanel({ currentT, duration }: { currentT: number; duration: number 
           <div className="ed-field">
             <label>Start (s)
               <input type="number" min={0} max={text.end - 0.1} step={0.1} value={Number(text.start.toFixed(2))}
-                onChange={(e) => patchText(text.id, { start: Math.min(Number(e.target.value), text.end - 0.1) })} />
+                onChange={(e) => patchText(text.id, { start: Math.max(0, Math.min(Number(e.target.value) || 0, text.end - 0.1)) })} />
             </label>
             <label>End (s)
-              <input type="number" min={text.start + 0.1} step={0.1} value={Number(text.end.toFixed(2))}
-                onChange={(e) => patchText(text.id, { end: Math.max(Number(e.target.value), text.start + 0.1) })} />
+              <input type="number" min={text.start + 0.1} max={Number(duration.toFixed(2))} step={0.1} value={Number(text.end.toFixed(2))}
+                onChange={(e) =>
+                  patchText(text.id, {
+                    end: Math.min(Math.max(Number(e.target.value) || 0, text.start + 0.1), Math.max(text.start + 0.1, duration)),
+                  })
+                } />
             </label>
           </div>
           <div className="ed-field">

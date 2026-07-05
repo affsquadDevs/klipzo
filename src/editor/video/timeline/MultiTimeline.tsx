@@ -196,11 +196,15 @@ export function MultiTimeline({ project, current, onSeek }: Props) {
 
       {/* Text overlay lane */}
       <div className="mt-textlane">
-        {project.texts.map((text) => (
+        {project.texts.map((text) => {
+          // Clamp to the visible timeline so an out-of-range end can't overflow.
+          const barStart = Math.max(0, Math.min(text.start, duration));
+          const barEnd = Math.max(barStart, Math.min(text.end, duration));
+          return (
           <button
             key={text.id}
             className={`mt-textbar ${selectedTextId === text.id ? "is-selected" : ""}`}
-            style={{ left: pct(text.start), width: pct(Math.max(0.1, text.end - text.start)) }}
+            style={{ left: pct(barStart), width: pct(Math.max(0.1, barEnd - barStart)) }}
             title={`“${text.text.slice(0, 24)}” ${formatDuration(text.start)}–${formatDuration(text.end)} (drag to move)`}
             onPointerDown={(e) => {
               e.stopPropagation();
@@ -218,7 +222,8 @@ export function MultiTimeline({ project, current, onSeek }: Props) {
           >
             T
           </button>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

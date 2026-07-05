@@ -67,6 +67,12 @@ export class PreviewEngine {
     return this.t;
   }
 
+  /** Live play state — read this instead of a React closure so keyboard toggles
+   *  (bound once) never act on a stale value. */
+  get isPlaying(): boolean {
+    return this.playing;
+  }
+
   private segmentAt(t: number): Segment | null {
     return layersAt(this.project.clips, t).base;
   }

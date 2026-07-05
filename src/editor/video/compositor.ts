@@ -235,12 +235,23 @@ export async function exportTimeline(
     if (!track) return null;
     const pipe: AssetPipe = { input, sink: new CanvasSink(track) };
     pipes.set(assetId, pipe);
+    // Pre-warm with the asset's first decodable frame so a getCanvas() null read
+    // (source time before the first sample — common for MediaRecorder output
+    // whose first sample isn't at ts 0) never composites as black.
+    try {
+      for await (const wrapped of pipe.sink.canvases(0)) {
+        lastFrame.set(assetId, wrapped.canvas);
+        break;
+      }
+    } catch {
+      /* pre-warm is best-effort */
+    }
     return pipe;
   }
 
   // Cache the last successfully fetched frame per asset so a null sink read
-  // (e.g. a timestamp just before the first sample) holds the previous frame
-  // instead of flashing black.
+  // (e.g. a timestamp just before the first sample) holds a real frame instead
+  // of flashing black; seeded with the first frame on pipe creation.
   const lastFrame = new Map<string, HTMLCanvasElement | OffscreenCanvas>();
   async function frameFor(seg: Segment, t: number): Promise<HTMLCanvasElement | OffscreenCanvas | null> {
     const pipe = await pipeFor(seg.clip.assetId);

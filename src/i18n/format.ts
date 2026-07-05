@@ -35,15 +35,23 @@ export function formatFileSize(bytes: number): string {
 /** Media duration → `H:MM:SS` or `M:SS`. `showMs` appends `.mmm` for frame-accurate UIs. */
 export function formatDuration(seconds: number, showMs = false): string {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
-  const whole = Math.floor(seconds);
+  let whole = Math.floor(seconds);
+  let ms = 0;
+  if (showMs) {
+    ms = Math.round((seconds - whole) * 1000);
+    // Rounding can push ms to 1000 (any value in ~[0.9995, 1)); carry into the
+    // whole seconds instead of printing a bogus 4-digit ".1000" field.
+    if (ms >= 1000) {
+      whole += 1;
+      ms = 0;
+    }
+  }
   const h = Math.floor(whole / 3600);
   const m = Math.floor((whole % 3600) / 60);
   const s = whole % 60;
   const pad = (n: number) => n.toString().padStart(2, "0");
   const base = h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
-  if (!showMs) return base;
-  const ms = Math.round((seconds - whole) * 1000);
-  return `${base}.${ms.toString().padStart(3, "0")}`;
+  return showMs ? `${base}.${ms.toString().padStart(3, "0")}` : base;
 }
 
 /** Timeline timecode `MM:SS.ff` given a frame rate. */
