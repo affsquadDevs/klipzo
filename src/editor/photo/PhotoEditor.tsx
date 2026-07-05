@@ -76,6 +76,7 @@ export function PhotoEditor({ media, onClose }: Props) {
   const [exportOpen, setExportOpen] = useState(false);
 
   const preset = useMemo(resolvePreset, []);
+  const [decodeError, setDecodeError] = useState<string | null>(null);
 
   // Decode the image into a working canvas.
   useEffect(() => {
@@ -88,10 +89,18 @@ export function PhotoEditor({ media, onClose }: Props) {
         bmp.close();
         finish(canvas);
       } catch {
+        // Fallback <img> decode; if that fails too (HEIC on Chrome, corrupt file…),
+        // surface a real message instead of hanging on "Decoding…" forever.
         const img = new Image();
         img.onload = () => {
           if (cancelled) return;
           finish(toCanvas(img, img.naturalWidth, img.naturalHeight));
+        };
+        img.onerror = () => {
+          if (cancelled) return;
+          setDecodeError(
+            "This image couldn’t be decoded by your browser. HEIC/HEIF photos aren’t supported yet — try exporting it as JPEG or PNG first.",
+          );
         };
         img.src = media.url;
       }
@@ -180,6 +189,14 @@ export function PhotoEditor({ media, onClose }: Props) {
             onCropRectChange={setCropRect}
             drawStyle={drawStyle}
           />
+        ) : decodeError ? (
+          <div className="pe-loading" style={{ padding: 24 }}>
+            <div style={{ display: "grid", gap: "0.75rem", maxWidth: 420, textAlign: "center", justifyItems: "center" }}>
+              <p style={{ color: "var(--color-fg)", fontWeight: 620 }}>Couldn’t open that image</p>
+              <p style={{ fontSize: "0.9rem", lineHeight: 1.6 }}>{decodeError}</p>
+              <button className="k-btn k-btn-primary" onClick={onClose}>Choose a different file</button>
+            </div>
+          </div>
         ) : (
           <div className="pe-loading">Decoding image on your device…</div>
         )}

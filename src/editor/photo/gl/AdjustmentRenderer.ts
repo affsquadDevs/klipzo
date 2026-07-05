@@ -174,6 +174,7 @@ export class AdjustmentRenderer {
   private width = 0;
   private height = 0;
   private disposed = false;
+  private maxTextureSize = 4096;
 
   constructor() {
     this.canvas = document.createElement("canvas");
@@ -185,6 +186,7 @@ export class AdjustmentRenderer {
     });
     if (!gl) throw new Error("WebGL not supported");
     this.gl = gl;
+    this.maxTextureSize = (gl.getParameter(gl.MAX_TEXTURE_SIZE) as number) || 4096;
     this.colorProg = link(gl, VERT, COLOR_FRAG);
     this.blurProg = link(gl, VERT, BLUR_FRAG);
 
@@ -199,9 +201,32 @@ export class AdjustmentRenderer {
     this.tex = gl.createTexture()!;
   }
 
-  /** Upload a new source. Recreates textures/FBOs sized to the source. */
+  /**
+   * Upload a new source. Recreates textures/FBOs sized to the source.
+   *
+   * Sources larger than the GPU's MAX_TEXTURE_SIZE are downscaled for processing —
+   * uploading an oversized texture silently produces a BLACK texture on many GPUs.
+   * The display layer stretches the output back to the document size; only extreme
+   * inputs (beyond ~4–16k, GPU-dependent) lose sharpness, instead of going black.
+   */
   setSource(source: TexImageSource, width: number, height: number): void {
     const gl = this.gl;
+
+    const scale = Math.min(1, this.maxTextureSize / width, this.maxTextureSize / height);
+    let upload: TexImageSource = source;
+    if (scale < 1) {
+      width = Math.max(1, Math.floor(width * scale));
+      height = Math.max(1, Math.floor(height * scale));
+      const tmp = document.createElement("canvas");
+      tmp.width = width;
+      tmp.height = height;
+      const tctx = tmp.getContext("2d")!;
+      tctx.imageSmoothingEnabled = true;
+      tctx.imageSmoothingQuality = "high";
+      tctx.drawImage(source as CanvasImageSource, 0, 0, width, height);
+      upload = tmp;
+    }
+
     this.width = width;
     this.height = height;
     this.canvas.width = width;
@@ -215,7 +240,7 @@ export class AdjustmentRenderer {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, upload);
 
     this.fboA?.fb && gl.deleteFramebuffer(this.fboA.fb);
     this.fboB?.fb && gl.deleteFramebuffer(this.fboB.fb);
