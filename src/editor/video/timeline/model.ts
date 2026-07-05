@@ -97,6 +97,9 @@ export interface TimedText {
   fadeOut: number;
   /** Entrance/exit animation preset. */
   animation: TextAnimation;
+  /** Position keyframes: when set, the text moves from (x,y) to (moveTo) over its
+   *  lifetime (a linear 2-keyframe motion). null = static. */
+  moveTo: { x: number; y: number } | null;
 }
 
 export interface Project {
@@ -456,8 +459,20 @@ export function addText(texts: TimedText[], at: number, timelineEnd: number): Ti
     fadeIn: 0.2,
     fadeOut: 0.2,
     animation: "fade",
+    moveTo: null,
   };
   return [...texts, t];
+}
+
+/** Effective (possibly animated) position of a text at timeline time t, 0..1 fractions. */
+export function textPositionAt(text: TimedText, t: number): { x: number; y: number } {
+  if (!text.moveTo) return { x: text.x, y: text.y };
+  const dur = Math.max(0.001, text.end - text.start);
+  const f = Math.min(1, Math.max(0, (t - text.start) / dur));
+  return {
+    x: text.x + (text.moveTo.x - text.x) * f,
+    y: text.y + (text.moveTo.y - text.y) * f,
+  };
 }
 
 export function updateText(texts: TimedText[], id: string, patch: Partial<TimedText>): TimedText[] {

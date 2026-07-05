@@ -37,6 +37,7 @@ import {
   totalDuration,
   textOpacityAt,
   textAnimAt,
+  textPositionAt,
   type Project,
   type TimedText,
   type Segment,
@@ -124,9 +125,10 @@ export function drawText(
   const opacity = textOpacityAt(text, t);
   if (opacity <= 0.001) return;
   const anim = textAnimAt(text, t);
+  const pos = textPositionAt(text, t);
   const px = Math.max(8, text.size * outH);
-  const cx = text.x * outW;
-  const cy = text.y * outH + anim.offsetY * px;
+  const cx = pos.x * outW;
+  const cy = pos.y * outH + anim.offsetY * px;
 
   ctx.save();
   ctx.globalAlpha = opacity;

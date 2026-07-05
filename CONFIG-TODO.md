@@ -62,6 +62,14 @@ The built-in banner is a compliant Consent Mode v2 signalling layer and a good d
 but it is **not** an IAB TCF-certified CMP on its own. Wire the certified CMP's
 grant/deny callbacks to the same `gtag('consent','update', …)` calls.
 
+## Deferred: proxy editing (Batch 3)
+
+Proxy editing (generate a low-res OPFS proxy on import so 4K files scrub instantly,
+swapping to full-res only at export) is **not yet implemented**. The editor works well
+on typical files; proxies mainly help 4K on low-end devices. The OPFS scratch plumbing
+(`src/editor/core/session.ts`) and the compositor (which already reads originals at full
+res) are the pieces to build on. Save/load, keyframes, and text-style presets shipped.
+
 ## Known v1 scope & deferred (phase-2) work
 
 The build delivers all 7 phases. These items are intentionally deferred and worth

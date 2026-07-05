@@ -49,10 +49,11 @@ export function Dropzone({ onFiles }: Props) {
         <p className="ed-dz__title">Drag &amp; drop a photo or video</p>
         <p className="ed-dz__sub">or click to browse · or paste from your clipboard</p>
         <p className="ed-dz__privacy">🔒 Files are opened on your device and never uploaded.</p>
+        <p className="ed-dz__sub">…or open a saved <strong>.klipzo</strong> project</p>
         <input
           ref={inputRef}
           type="file"
-          accept="image/*,video/*,audio/*"
+          accept="image/*,video/*,audio/*,.klipzo"
           hidden
           onChange={(e) => {
             if (e.target.files?.length) onFiles(e.target.files);

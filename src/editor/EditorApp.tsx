@@ -89,34 +89,56 @@ class EditorErrorBoundary extends Component<
 
 export default function EditorApp() {
   const [media, setMedia] = useState<LoadedMedia | null>(null);
+  const [projectLoaded, setProjectLoaded] = useState(false);
 
   async function handleFiles(files: FileList | File[]) {
     const file = Array.from(files)[0];
     if (!file) return;
+
+    // A .klipzo project file opens straight into the video editor with its embedded
+    // media and edits restored — so a returning user can resume from the dropzone.
+    if (/\.klipzo$/i.test(file.name)) {
+      try {
+        const { loadProject } = await import("./video/project/klipzo");
+        const { useTimeline } = await import("./video/timeline/store");
+        const project = await loadProject(file);
+        useTimeline.getState().loadProjectData(project);
+        setMedia(null);
+        setProjectLoaded(true);
+      } catch (e) {
+        alert(e instanceof Error ? e.message : "Couldn’t open that project file.");
+      }
+      return;
+    }
+
     const kind = classifyFile(file);
     if (kind === "unknown") {
       alert("That file type isn’t supported yet.");
       return;
     }
+    setProjectLoaded(false);
     setMedia({ file, kind, url: URL.createObjectURL(file) });
   }
 
   function reset() {
     if (media) URL.revokeObjectURL(media.url);
     setMedia(null);
+    setProjectLoaded(false);
   }
 
+  const active = Boolean(media) || projectLoaded;
+
   return (
-    <EditorShell hasMedia={Boolean(media)} onReset={reset}>
-      {!media ? (
+    <EditorShell hasMedia={active} onReset={reset}>
+      {!active ? (
         <Dropzone onFiles={handleFiles} />
       ) : (
         <EditorErrorBoundary onReset={reset}>
           <Suspense fallback={<EngineLoading />}>
-            {media.kind === "image" ? (
+            {media?.kind === "image" ? (
               <PhotoEditor media={media} onClose={reset} />
             ) : (
-              <VideoEditor media={media} onClose={reset} />
+              <VideoEditor media={media} onClose={reset} projectPreloaded={projectLoaded} />
             )}
           </Suspense>
         </EditorErrorBoundary>

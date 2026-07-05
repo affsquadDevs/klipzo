@@ -13,6 +13,7 @@ import { exportTimeline } from "./compositor";
 import { captureFrame, exportGif } from "./frames";
 import { baseName, triggerDownload } from "../photo/export";
 import { probeAsset, ProbeError } from "./probe";
+import { saveProject, loadProject, ProjectFileError } from "./project/klipzo";
 import { PreviewEngine } from "./preview";
 import { useTimeline } from "./timeline/store";
 import { totalDuration, effectiveTransition, type TransitionType, type TextAnimation } from "./timeline/model";
@@ -25,8 +26,11 @@ import "./video-editor.css";
 type Mode = "clips" | "effects" | "text" | "reframe" | "rotate" | "gif" | "audio" | "frame";
 
 interface Props {
-  media: LoadedMedia;
+  /** Null when opening straight into a preloaded .klipzo project. */
+  media: LoadedMedia | null;
   onClose: () => void;
+  /** True when the store already holds a project loaded from a .klipzo file. */
+  projectPreloaded?: boolean;
 }
 
 const REFRAME_PRESETS = [
@@ -42,9 +46,10 @@ function even(n: number): number {
   return r % 2 === 0 ? r : r - 1;
 }
 
-export function VideoEditor({ media, onClose }: Props) {
+export function VideoEditor({ media, onClose, projectPreloaded = false }: Props) {
   const project = useTimeline((s) => s.project);
   const addAsset = useTimeline((s) => s.addAsset);
+  const loadProjectData = useTimeline((s) => s.loadProjectData);
   const resetTimeline = useTimeline((s) => s.reset);
   const undo = useTimeline((s) => s.undo);
   const redo = useTimeline((s) => s.redo);
@@ -75,6 +80,7 @@ export function VideoEditor({ media, onClose }: Props) {
   const engineRef = useRef<PreviewEngine | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const addClipInputRef = useRef<HTMLInputElement>(null);
+  const projectInputRef = useRef<HTMLInputElement>(null);
 
   const duration = totalDuration(project.clips);
   const firstAsset = project.clips.length ? project.assets[project.clips[0]!.assetId] : undefined;
@@ -115,8 +121,9 @@ export function VideoEditor({ media, onClose }: Props) {
     };
   }, []);
 
-  // Import the initial file.
+  // Import the initial file (skipped when a .klipzo project is already loaded).
   useEffect(() => {
+    if (projectPreloaded || !media) return () => resetTimeline();
     let cancelled = false;
     setImporting(true);
     probeAsset(media.file)
@@ -334,6 +341,32 @@ export function VideoEditor({ media, onClose }: Props) {
     abortRef.current?.abort();
   }
 
+  async function handleSaveProject() {
+    if (!project.clips.length) return;
+    try {
+      const blob = await saveProject(project);
+      triggerDownload(blob, `${baseName(firstAsset?.file.name ?? "klipzo")}.klipzo`);
+      track("feature_used", { feature: "save_project", media_kind: "video" });
+    } catch {
+      setError("Couldn’t save the project.");
+    }
+  }
+
+  async function handleOpenProject(files: FileList | null) {
+    const file = files?.[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const loaded = await loadProject(file);
+      loadProjectData(loaded);
+      track("feature_used", { feature: "open_project", media_kind: "video" });
+    } catch (e) {
+      setError(e instanceof ProjectFileError ? e.message : "Couldn’t open that project file.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
   /* ---------- render ---------- */
 
   if (loadError) {
@@ -402,20 +435,16 @@ export function VideoEditor({ media, onClose }: Props) {
             <button className="k-btn k-btn-ghost ed-btn-sm" onClick={() => addClipInputRef.current?.click()} disabled={importing}>
               {importing ? "Importing…" : "+ Add clip"}
             </button>
+            <button className="k-btn k-btn-ghost ed-btn-sm" onClick={() => projectInputRef.current?.click()} disabled={importing} title="Open a .klipzo project">Open</button>
+            <button className="k-btn k-btn-ghost ed-btn-sm" onClick={handleSaveProject} disabled={!project.clips.length} title="Save this project to your device">Save</button>
             <button className="k-btn k-btn-ghost ed-btn-sm" onClick={onClose}>Close</button>
             <button className="k-btn k-btn-primary ed-btn-sm" onClick={primary.run} disabled={!!task || primary.disabled}>
               ⬇ {primary.label}
             </button>
-            <input
-              ref={addClipInputRef}
-              type="file"
-              accept="video/*"
-              hidden
-              onChange={(e) => {
-                void handleAddClip(e.target.files);
-                e.target.value = "";
-              }}
-            />
+            <input ref={projectInputRef} type="file" accept=".klipzo,application/x-klipzo" hidden
+              onChange={(e) => { void handleOpenProject(e.target.files); e.target.value = ""; }} />
+            <input ref={addClipInputRef} type="file" accept="video/*" hidden
+              onChange={(e) => { void handleAddClip(e.target.files); e.target.value = ""; }} />
           </div>
         </div>
 
@@ -672,6 +701,13 @@ function ClipsPanel(props: {
   );
 }
 
+const TEXT_PRESETS: Array<{ name: string; style: Partial<import("./timeline/model").TimedText> }> = [
+  { name: "Title", style: { size: 0.11, y: 0.2, bold: true, outline: false, shadow: true, animation: "pop", color: "#ffffff" } },
+  { name: "Subtitle", style: { size: 0.05, y: 0.9, bold: false, outline: true, shadow: true, animation: "fade", color: "#ffffff" } },
+  { name: "Caption", style: { size: 0.07, y: 0.82, bold: true, outline: true, shadow: true, animation: "typewriter", color: "#ffffff" } },
+  { name: "Lower third", style: { size: 0.055, x: 0.28, y: 0.85, bold: true, outline: false, shadow: true, animation: "slide-up", color: "#ffdd33" } },
+];
+
 function TextPanel({ currentT, duration }: { currentT: number; duration: number }) {
   const project = useTimeline((s) => s.project);
   const selectedTextId = useTimeline((s) => s.selectedTextId);
@@ -690,6 +726,14 @@ function TextPanel({ currentT, duration }: { currentT: number; duration: number 
       <button className="k-btn k-btn-primary ed-btn-sm ed-fullbtn" onClick={() => addTextAt(currentT)} disabled={duration <= 0}>
         + Add text at playhead
       </button>
+      {text && (
+        <div className="ed-btnrow">
+          {TEXT_PRESETS.map((p) => (
+            <button key={p.name} className="k-btn k-btn-ghost ed-btn-sm" title={`Apply ${p.name} style`}
+              onClick={() => patchText(text.id, p.style)}>{p.name}</button>
+          ))}
+        </div>
+      )}
       {text ? (
         <div className="ed-panel__section ed-panel__body">
           <label className="ed-field-col">Content
@@ -738,6 +782,25 @@ function TextPanel({ currentT, duration }: { currentT: number; duration: number 
               onPointerDown={beginStroke} onPointerUp={endStroke}
               onChange={(e) => live({ y: Number(e.target.value) })} />
           </label>
+          <label className="ed-check">
+            <input type="checkbox" checked={!!text.moveTo}
+              onChange={(e) => patchText(text.id, { moveTo: e.target.checked ? { x: text.x, y: Math.max(0.05, text.y - 0.25) } : null })} />
+            {" "}Move across screen (position keyframes)
+          </label>
+          {text.moveTo && (
+            <>
+              <label className="ed-field-col">End horizontal — {(text.moveTo.x * 100).toFixed(0)}%
+                <input type="range" min={0.05} max={0.95} step={0.01} value={text.moveTo.x}
+                  onPointerDown={beginStroke} onPointerUp={endStroke}
+                  onChange={(e) => live({ moveTo: { x: Number(e.target.value), y: text.moveTo!.y } })} />
+              </label>
+              <label className="ed-field-col">End vertical — {(text.moveTo.y * 100).toFixed(0)}%
+                <input type="range" min={0.05} max={0.95} step={0.01} value={text.moveTo.y}
+                  onPointerDown={beginStroke} onPointerUp={endStroke}
+                  onChange={(e) => live({ moveTo: { x: text.moveTo!.x, y: Number(e.target.value) } })} />
+              </label>
+            </>
+          )}
           <div className="ed-field">
             <label>Fade in (s)
               <input type="number" min={0} max={3} step={0.1} value={text.fadeIn}

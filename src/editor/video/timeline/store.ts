@@ -78,6 +78,8 @@ interface TimelineState {
   selectText: (id: string | null) => void;
   selectMusic: (id: string | null) => void;
 
+  loadProjectData: (project: Project) => void;
+
   beginStroke: () => void;
   endStroke: () => void;
   undo: () => void;
@@ -271,6 +273,21 @@ export const useTimeline = create<TimelineState>((set, get) => {
           selectedMusicId: null,
         };
       }),
+
+    loadProjectData: (project) => {
+      const old = get().project;
+      for (const a of Object.values(old.assets)) URL.revokeObjectURL(a.url);
+      for (const m of old.music) URL.revokeObjectURL(m.url);
+      set({
+        project,
+        past: [],
+        future: [],
+        selectedClipIndex: project.clips.length ? 0 : null,
+        selectedTextId: null,
+        selectedMusicId: null,
+        _stroke: null,
+      });
+    },
 
     reset: () => {
       // Revoke asset + music object URLs before dropping them (session hygiene).
