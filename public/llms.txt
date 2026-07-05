@@ -34,6 +34,10 @@ is no backend that receives media.
 - [Add text to video](https://klipzo.app/add-text-to-video): Titles, captions, watermarks.
 - [Rotate video](https://klipzo.app/rotate-video): Fix video orientation.
 - [Resize for Instagram](https://klipzo.app/resize-video-for-instagram): Reels/feed/story presets.
+- [Auto caption video](https://klipzo.app/auto-caption-video): On-device AI captions (Whisper in-browser, audio never uploaded) + .srt export.
+- [Green screen video](https://klipzo.app/green-screen-video): Chroma key / green-screen removal on-device.
+- [Speed up video](https://klipzo.app/speed-up-video): 0.25x–4x speed with pitch-preserved audio.
+- [Add music to video](https://klipzo.app/add-music-to-video): Background music + mic voiceover, mixed on-device.
 
 ## Trust & how it works
 - [How it works](https://klipzo.app/how-it-works): Why nothing is uploaded.

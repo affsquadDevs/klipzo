@@ -47,6 +47,28 @@ function even(n: number): number {
   return r % 2 === 0 ? r : r - 1;
 }
 
+/** Map a landing-page ?tool= preset to a video editor mode. */
+function resolveVideoPreset(): Mode {
+  if (typeof window === "undefined") return "clips";
+  const raw = (new URLSearchParams(window.location.search).get("tool") ?? "").split(":")[0] ?? "";
+  const map: Record<string, Mode> = {
+    trim: "clips",
+    crop: "reframe",
+    compress: "clips",
+    convert: "clips",
+    reframe: "reframe",
+    rotate: "rotate",
+    gif: "gif",
+    "extract-audio": "audio",
+    audio: "audio",
+    text: "text",
+    effects: "effects",
+    captions: "captions",
+    speed: "clips",
+  };
+  return map[raw] ?? "clips";
+}
+
 export function VideoEditor({ media, onClose, projectPreloaded = false }: Props) {
   const project = useTimeline((s) => s.project);
   const addAsset = useTimeline((s) => s.addAsset);
@@ -58,7 +80,7 @@ export function VideoEditor({ media, onClose, projectPreloaded = false }: Props)
   const canRedo = useTimeline((s) => s.future.length > 0);
 
   const [caps, setCaps] = useState<VideoCapabilities | null>(null);
-  const [mode, setMode] = useState<Mode>("clips");
+  const [mode, setMode] = useState<Mode>(resolveVideoPreset);
   const [rotate, setRotate] = useState<0 | 90 | 180 | 270>(0);
   const [reframe, setReframe] = useState<{ label: string; ratio: number | null }>({
     label: "Original",

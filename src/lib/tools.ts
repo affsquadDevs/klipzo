@@ -272,6 +272,54 @@ export const VIDEO_TOOLS: Tool[] = [
     tagline: "Reels, feed, and story presets.",
     status: "v1",
   },
+  {
+    slug: "auto-caption-video",
+    kind: "video",
+    label: "Auto captions",
+    h1: "Add automatic captions to a video — free, on your device",
+    title: "Auto Caption Video — Free AI Subtitles, No Upload",
+    description:
+      "Generate captions from your video’s speech with on-device AI. The model runs in your browser — your audio is never uploaded. Burn them in or export .srt.",
+    editorPreset: "captions",
+    tagline: "AI captions, nothing uploaded.",
+    status: "v1",
+  },
+  {
+    slug: "green-screen-video",
+    kind: "video",
+    label: "Green screen",
+    h1: "Remove a green screen from a video — free, in your browser",
+    title: "Green Screen Video Editor — Free Chroma Key, No Upload",
+    description:
+      "Key out a green (or blue) screen and isolate your subject — entirely in your browser. Adjust similarity, feather, and spill. Nothing is uploaded.",
+    editorPreset: "effects",
+    tagline: "Chroma key without uploading.",
+    status: "v1",
+  },
+  {
+    slug: "speed-up-video",
+    kind: "video",
+    label: "Speed up video",
+    h1: "Speed up or slow down a video — free, no upload",
+    title: "Speed Up / Slow Down Video — Free, Private, No Sign-up",
+    description:
+      "Change a video’s speed from 0.25× to 4× in your browser, with the audio pitch preserved. Free, private, watermark-free — nothing leaves your device.",
+    editorPreset: "speed",
+    tagline: "0.25×–4×, pitch preserved.",
+    status: "v1",
+  },
+  {
+    slug: "add-music-to-video",
+    kind: "video",
+    label: "Add music",
+    h1: "Add music to a video — free, no upload",
+    title: "Add Music to Video — Free, Private, No Watermark",
+    description:
+      "Add a background music track (or record a voiceover) to your video in the browser, with volume and fades. Mixed on your device — never uploaded.",
+    editorPreset: "audio",
+    tagline: "Background music + voiceover.",
+    status: "v1",
+  },
 ];
 
 export const ALL_TOOLS: Tool[] = [...PHOTO_TOOLS, ...VIDEO_TOOLS];
