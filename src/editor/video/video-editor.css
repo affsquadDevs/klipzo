@@ -204,6 +204,13 @@
   text-overflow: ellipsis;
   pointer-events: none;
 }
+.mt-clip__fx {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  font-size: 0.7rem;
+  pointer-events: none;
+}
 .mt-handle {
   position: absolute;
   top: -2px;
@@ -284,6 +291,43 @@
 .mt-textbar.is-selected {
   box-shadow: 0 0 0 1.5px #d98324;
   color: var(--color-fg);
+}
+
+/* Effects panel */
+.ed-fx-adjust {
+  margin-top: 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.ed-fx-adjust > summary {
+  cursor: pointer;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.85rem;
+  color: var(--color-fg-muted);
+  list-style: none;
+}
+.ed-fx-adjust > summary::-webkit-details-marker {
+  display: none;
+}
+.ed-fx-adjust[open] > summary {
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-fg);
+}
+.ed-fx-adjust > .ed-panel__body {
+  padding: 0.7rem;
+}
+.ed-fx-keypresets {
+  display: flex;
+  gap: 0.3rem;
+  align-items: flex-end;
+  padding-bottom: 0.15rem;
+}
+.ed-fx-keybtn {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
 }
 
 @media (max-width: 860px) {

@@ -15,12 +15,13 @@ import { baseName, triggerDownload } from "../photo/export";
 import { probeAsset, ProbeError } from "./probe";
 import { PreviewEngine } from "./preview";
 import { useTimeline } from "./timeline/store";
-import { totalDuration, effectiveTransition, type TransitionType } from "./timeline/model";
+import { totalDuration, effectiveTransition, type TransitionType, type TextAnimation } from "./timeline/model";
 import { MultiTimeline } from "./timeline/MultiTimeline";
+import { EffectsPanel } from "./panels/EffectsPanel";
 import "../photo/photo-editor.css";
 import "./video-editor.css";
 
-type Mode = "clips" | "text" | "reframe" | "rotate" | "gif" | "audio" | "frame";
+type Mode = "clips" | "effects" | "text" | "reframe" | "rotate" | "gif" | "audio" | "frame";
 
 interface Props {
   media: LoadedMedia;
@@ -350,6 +351,7 @@ export function VideoEditor({ media, onClose }: Props) {
 
   const modes: Array<{ id: Mode; label: string; icon: string; disabled?: boolean; hint?: string }> = [
     { id: "clips", label: "Clips", icon: "✂" },
+    { id: "effects", label: "Effects", icon: "🎨" },
     { id: "text", label: "Text", icon: "T" },
     { id: "reframe", label: "Reframe", icon: "▭" },
     { id: "rotate", label: "Rotate", icon: "⟳" },
@@ -444,6 +446,7 @@ export function VideoEditor({ media, onClose }: Props) {
             caps={caps}
           />
         )}
+        {mode === "effects" && <EffectsPanel />}
         {mode === "text" && <TextPanel currentT={currentT} duration={duration} />}
         {mode === "reframe" && (
           <div className="ed-panel">
@@ -672,6 +675,15 @@ function TextPanel({ currentT, duration }: { currentT: number; duration: number 
             <textarea rows={2} value={text.text}
               onFocus={beginStroke} onBlur={endStroke}
               onChange={(e) => live({ text: e.target.value })} />
+          </label>
+          <label className="ed-field-col">Animation
+            <select value={text.animation} onChange={(e) => patchText(text.id, { animation: e.target.value as TextAnimation })}>
+              <option value="none">None</option>
+              <option value="fade">Fade</option>
+              <option value="pop">Pop</option>
+              <option value="slide-up">Slide up</option>
+              <option value="typewriter">Typewriter</option>
+            </select>
           </label>
           <div className="ed-field">
             <label>Start (s)

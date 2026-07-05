@@ -13,6 +13,8 @@ import {
   moveClip,
   setClipTrim,
   setTransition,
+  setClipAdjustments,
+  setClipChroma,
   addText,
   updateText,
   removeText,
@@ -22,6 +24,8 @@ import {
   type Clip,
   type TimedText,
   type Transition,
+  type Adjustments,
+  type ChromaKey,
 } from "./model";
 
 interface HistoryEntry {
@@ -49,6 +53,8 @@ interface TimelineState {
   moveClipBy: (index: number, dir: -1 | 1) => void;
   trimClip: (index: number, inT: number, outT: number, history?: boolean) => void;
   setClipTransition: (index: number, transition: Transition) => void;
+  setClipAdjustments: (index: number, adjustments: Adjustments, history?: boolean) => void;
+  setClipChroma: (index: number, chroma: ChromaKey, history?: boolean) => void;
 
   addTextAt: (t: number) => void;
   patchText: (id: string, patch: Partial<TimedText>, history?: boolean) => void;
@@ -131,6 +137,22 @@ export const useTimeline = create<TimelineState>((set, get) => {
 
     setClipTransition: (index, transition) =>
       commit((p) => ({ clips: setTransition(p.clips, index, transition) })),
+
+    setClipAdjustments: (index, adjustments, history = true) => {
+      if (history) commit((p) => ({ clips: setClipAdjustments(p.clips, index, adjustments) }));
+      else
+        set((s) => ({
+          project: { ...s.project, clips: setClipAdjustments(s.project.clips, index, adjustments) },
+        }));
+    },
+
+    setClipChroma: (index, chroma, history = true) => {
+      if (history) commit((p) => ({ clips: setClipChroma(p.clips, index, chroma) }));
+      else
+        set((s) => ({
+          project: { ...s.project, clips: setClipChroma(s.project.clips, index, chroma) },
+        }));
+    },
 
     addTextAt: (t) => {
       commit((p) => ({ texts: addText(p.texts, t, totalDuration(p.clips)) }));

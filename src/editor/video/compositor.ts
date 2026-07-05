@@ -30,14 +30,17 @@ import {
 import { detectCapabilities } from "./capabilities";
 import { UnsupportedExportError, type OutputContainer, type QualityLevel } from "./engine";
 import { mixTimelineAudio } from "./audioMix";
+import { VideoFrameFX, isIdentityFX } from "./fx/VideoFrameFX";
 import {
   layersAt,
   sourceTime,
   totalDuration,
   textOpacityAt,
+  textAnimAt,
   type Project,
   type TimedText,
   type Segment,
+  type Clip,
 } from "./timeline/model";
 
 const QUALITY_MAP: Record<QualityLevel, Quality> = {
@@ -120,9 +123,19 @@ export function drawText(
 ): void {
   const opacity = textOpacityAt(text, t);
   if (opacity <= 0.001) return;
+  const anim = textAnimAt(text, t);
   const px = Math.max(8, text.size * outH);
+  const cx = text.x * outW;
+  const cy = text.y * outH + anim.offsetY * px;
+
   ctx.save();
   ctx.globalAlpha = opacity;
+  // Scale animations (pop) transform around the text anchor.
+  if (anim.scale !== 1) {
+    ctx.translate(cx, cy);
+    ctx.scale(anim.scale, anim.scale);
+    ctx.translate(-cx, -cy);
+  }
   ctx.font = `${text.bold ? "700" : "400"} ${px}px "Inter Variable", system-ui, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -131,10 +144,25 @@ export function drawText(
     ctx.shadowBlur = px * 0.15;
     ctx.shadowOffsetY = px * 0.05;
   }
-  const lines = text.text.split("\n");
+
+  // Typewriter reveal: slice each line proportionally to `reveal`.
+  const rawLines = text.text.split("\n");
+  const total = text.text.replace(/\n/g, "").length || 1;
+  const shown = Math.round(total * anim.reveal);
+  const lines =
+    anim.reveal >= 1
+      ? rawLines
+      : (() => {
+          let budget = shown;
+          return rawLines.map((ln) => {
+            const take = Math.max(0, Math.min(ln.length, budget));
+            budget -= ln.length;
+            return ln.slice(0, take);
+          });
+        })();
+
   const lineHeight = px * 1.2;
-  const cx = text.x * outW;
-  const startY = text.y * outH - ((lines.length - 1) * lineHeight) / 2;
+  const startY = cy - ((rawLines.length - 1) * lineHeight) / 2;
   for (let i = 0; i < lines.length; i++) {
     const y = startY + i * lineHeight;
     if (text.outline) {
@@ -265,6 +293,28 @@ export async function exportTimeline(
     return lastFrame.get(seg.clip.assetId) ?? null;
   }
 
+  // Per-clip effects (adjustments + chroma key). One FX renderer, reused; skipped
+  // entirely for clips with no effects so plain exports pay nothing.
+  let fx: VideoFrameFX | null = null;
+  let fxUnavailable = false;
+  function applyClipFX(
+    frame: HTMLCanvasElement | OffscreenCanvas,
+    clip: Clip,
+  ): CanvasImageSource {
+    const wantsFX = !isIdentityFX({ adjustments: clip.adjustments, chroma: clip.chroma });
+    if (!wantsFX || fxUnavailable) return frame as CanvasImageSource;
+    try {
+      if (!fx) fx = new VideoFrameFX();
+      return fx.render(frame as TexImageSource, frame.width, frame.height, {
+        adjustments: clip.adjustments,
+        chroma: clip.chroma,
+      });
+    } catch {
+      fxUnavailable = true;
+      return frame as CanvasImageSource;
+    }
+  }
+
   try {
     await output.start();
 
@@ -283,14 +333,14 @@ export async function exportTimeline(
       const fit = opts.fit ?? "contain";
       if (layers.base) {
         const f = await frameFor(layers.base, t);
-        if (f) drawMedia(ctx, f as CanvasImageSource, f.width, f.height, outW, outH, rotate, 1, fit);
+        if (f) drawMedia(ctx, applyClipFX(f, layers.base.clip), f.width, f.height, outW, outH, rotate, 1, fit);
       }
       if (layers.incoming && layers.incomingAlpha > 0) {
         const f = await frameFor(layers.incoming, t);
         if (f)
           drawMedia(
             ctx,
-            f as CanvasImageSource,
+            applyClipFX(f, layers.incoming.clip),
             f.width,
             f.height,
             outW,
@@ -331,6 +381,8 @@ export async function exportTimeline(
     await output.cancel().catch(() => {});
     throw e;
   } finally {
+    // fx is only mutated inside a closure, so TS narrows it to null here — cast back.
+    (fx as VideoFrameFX | null)?.dispose();
     for (const pipe of pipes.values()) {
       try {
         (pipe.input as unknown as { dispose?: () => void }).dispose?.();

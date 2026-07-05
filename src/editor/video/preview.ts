@@ -13,8 +13,10 @@ import {
   totalDuration,
   type Project,
   type Segment,
+  type Clip,
 } from "./timeline/model";
 import { drawMedia, drawText } from "./compositor";
+import { VideoFrameFX, isIdentityFX } from "./fx/VideoFrameFX";
 
 export interface PreviewConfig {
   rotate: 0 | 90 | 180 | 270;
@@ -34,6 +36,8 @@ export class PreviewEngine {
   private raf = 0;
   private disposed = false;
   private currentAssetId: string | null = null;
+  private fx: VideoFrameFX | null = null;
+  private fxUnavailable = false;
   /** Notifies the UI of time/play-state changes. */
   onUpdate: (t: number, playing: boolean) => void = () => {};
 
@@ -186,7 +190,10 @@ export class PreviewEngine {
 
     const layers = layersAt(this.project.clips, this.t);
     if (layers.base && this.video.readyState >= 2) {
-      drawMedia(ctx, this.video, this.video.videoWidth, this.video.videoHeight, outW, outH, rotate, 1, fit);
+      const source = this.applyFX(layers.base.clip);
+      const sw = source === this.video ? this.video.videoWidth : (source as HTMLCanvasElement).width;
+      const sh = source === this.video ? this.video.videoHeight : (source as HTMLCanvasElement).height;
+      drawMedia(ctx, source, sw, sh, outW, outH, rotate, 1, fit);
     }
 
     // Crossfade approximation: a soft dip peaking mid-transition (export blends
@@ -206,9 +213,27 @@ export class PreviewEngine {
     for (const text of this.project.texts) drawText(ctx, text, this.t, outW, outH);
   }
 
+  /** Run the active clip's effects on the current video frame (or the raw video). */
+  private applyFX(clip: Clip): CanvasImageSource {
+    const wants = !isIdentityFX({ adjustments: clip.adjustments, chroma: clip.chroma });
+    if (!wants || this.fxUnavailable || this.video.videoWidth === 0) return this.video;
+    try {
+      if (!this.fx) this.fx = new VideoFrameFX();
+      return this.fx.render(this.video, this.video.videoWidth, this.video.videoHeight, {
+        adjustments: clip.adjustments,
+        chroma: clip.chroma,
+      });
+    } catch {
+      this.fxUnavailable = true;
+      return this.video;
+    }
+  }
+
   dispose(): void {
     this.disposed = true;
     this.pause();
+    this.fx?.dispose();
+    this.fx = null;
     this.video.removeAttribute("src");
     this.video.load();
   }

@@ -12,7 +12,14 @@ import {
   effectiveTransition,
   totalDuration,
   type Project,
+  type Clip,
 } from "./model";
+
+/** True if a clip carries any non-identity color/tone adjustment. */
+function clipHasFX(clip: Clip): boolean {
+  const a = clip.adjustments;
+  return (Object.keys(a) as (keyof typeof a)[]).some((k) => a[k] !== 0);
+}
 import { useTimeline } from "./store";
 import { formatDuration } from "../../../i18n/format";
 
@@ -138,6 +145,9 @@ export function MultiTimeline({ project, current, onSeek }: Props) {
               <span className="mt-clip__label">
                 {seg.index + 1} · {formatDuration(seg.end - seg.start)}
               </span>
+              {(clipHasFX(seg.clip) || seg.clip.chroma.enabled) && (
+                <span className="mt-clip__fx" title="Has effects" aria-hidden>🎨</span>
+              )}
 
               {isSel && (
                 <>

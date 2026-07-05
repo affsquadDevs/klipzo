@@ -9,6 +9,14 @@
  *  - "source time"   = seconds within an asset's own media.
  *  - "timeline time" = seconds on the output timeline (what the playhead shows).
  */
+import { ZERO_ADJUSTMENTS, type Adjustments } from "../../photo/gl/AdjustmentRenderer";
+import type { ChromaKey } from "../fx/VideoFrameFX";
+
+export type { Adjustments, ChromaKey };
+
+export function defaultChroma(): ChromaKey {
+  return { enabled: false, color: [0, 1, 0], similarity: 0.4, smoothness: 0.1, spill: 0.3 };
+}
 
 export interface SourceAsset {
   id: string;
@@ -22,6 +30,8 @@ export interface SourceAsset {
 }
 
 export type TransitionType = "none" | "crossfade" | "dip-to-black";
+
+export type TextAnimation = "none" | "fade" | "pop" | "slide-up" | "typewriter";
 
 export interface Transition {
   type: TransitionType;
@@ -38,6 +48,10 @@ export interface Clip {
   out: number;
   /** Transition into the NEXT clip. Ignored on the last clip. */
   transitionAfter: Transition;
+  /** Per-clip color/tone effect (Batch 1). */
+  adjustments: Adjustments;
+  /** Per-clip chroma key / green-screen (Batch 1). */
+  chroma: ChromaKey;
 }
 
 export interface TimedText {
@@ -58,6 +72,8 @@ export interface TimedText {
   /** Keyframed opacity ramps, seconds. 0 = hard cut. */
   fadeIn: number;
   fadeOut: number;
+  /** Entrance/exit animation preset. */
+  animation: TextAnimation;
 }
 
 export interface Project {
@@ -219,6 +235,56 @@ export function interpolate(keyframes: Keyframe[], t: number): number {
   return last.v;
 }
 
+export interface TextAnimState {
+  scale: number;
+  /** Vertical offset as a fraction of font size (positive = down). */
+  offsetY: number;
+  /** 0..1 fraction of characters revealed (typewriter). */
+  reveal: number;
+}
+
+/** Entrance/exit animation transform for a timed text at timeline time t. */
+export function textAnimAt(text: TimedText, t: number): TextAnimState {
+  const still: TextAnimState = { scale: 1, offsetY: 0, reveal: 1 };
+  if (t < text.start || t > text.end || text.animation === "none" || text.animation === "fade") {
+    return still;
+  }
+  const dur = text.end - text.start;
+  const inDur = Math.min(0.35, dur / 2);
+  const outDur = Math.min(0.3, dur / 2);
+  const tin = (t - text.start) / inDur; // 0..1 across entrance
+  const tout = (text.end - t) / outDur; // 0..1 across exit (reversed)
+  const entering = t < text.start + inDur;
+  const exiting = t > text.end - outDur;
+
+  if (text.animation === "pop") {
+    if (entering) {
+      const e = Math.min(1, tin);
+      // Overshoot ease-out-back.
+      const s = 1 + 2.7 * (e - 1) ** 3 + 1.7 * (e - 1) ** 2;
+      return { scale: s, offsetY: 0, reveal: 1 };
+    }
+    if (exiting) return { scale: 0.85 + 0.15 * Math.min(1, tout), offsetY: 0, reveal: 1 };
+    return still;
+  }
+  if (text.animation === "slide-up") {
+    if (entering) {
+      const e = 1 - (1 - Math.min(1, tin)) ** 3; // ease-out
+      return { scale: 1, offsetY: (1 - e) * 1.4, reveal: 1 };
+    }
+    if (exiting) {
+      const e = 1 - (1 - Math.min(1, tout)) ** 3;
+      return { scale: 1, offsetY: (1 - e) * -1.0, reveal: 1 };
+    }
+    return still;
+  }
+  if (text.animation === "typewriter") {
+    const revealDur = Math.min(1.2, dur * 0.7);
+    return { scale: 1, offsetY: 0, reveal: Math.min(1, (t - text.start) / revealDur) };
+  }
+  return still;
+}
+
 /** Opacity of a timed text at timeline time t (0 outside its range, fade ramps inside). */
 export function textOpacityAt(text: TimedText, t: number): number {
   if (t < text.start || t > text.end) return 0;
@@ -245,8 +311,26 @@ export function appendClip(clips: Clip[], asset: SourceAsset): Clip[] {
     in: 0,
     out: Math.max(MIN_CLIP_LEN, asset.duration),
     transitionAfter: { type: "none", duration: 0.5 },
+    adjustments: { ...ZERO_ADJUSTMENTS },
+    chroma: defaultChroma(),
   };
   return [...clips, clip];
+}
+
+export function setClipAdjustments(clips: Clip[], index: number, adjustments: Adjustments): Clip[] {
+  const clip = clips[index];
+  if (!clip) return clips;
+  const next = [...clips];
+  next[index] = { ...clip, adjustments: { ...adjustments } };
+  return next;
+}
+
+export function setClipChroma(clips: Clip[], index: number, chroma: ChromaKey): Clip[] {
+  const clip = clips[index];
+  if (!clip) return clips;
+  const next = [...clips];
+  next[index] = { ...clip, chroma: { ...chroma } };
+  return next;
 }
 
 /** Split the clip under timeline time `t` into two clips at that point. */
@@ -323,6 +407,7 @@ export function addText(texts: TimedText[], at: number, timelineEnd: number): Ti
     shadow: true,
     fadeIn: 0.2,
     fadeOut: 0.2,
+    animation: "fade",
   };
   return [...texts, t];
 }
