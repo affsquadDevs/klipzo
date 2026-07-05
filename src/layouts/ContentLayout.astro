@@ -1,0 +1,46 @@
+---
+/**
+ * Layout for content/landing/guide/policy pages — the light, fast, ad-bearing,
+ * SEO-ranking surface (§3.1, §6). Deliberately imports NO editor code.
+ */
+import BaseLayout from "./BaseLayout.astro";
+import Breadcrumbs from "../components/Breadcrumbs.astro";
+import type { Crumb } from "../lib/seo";
+
+interface Props {
+  title: string;
+  description: string;
+  canonical?: string;
+  ogImage?: string;
+  ogType?: "website" | "article";
+  noindex?: boolean;
+  schema?: Array<object | undefined | null>;
+  crumbs?: Crumb[];
+  /** Constrain <main> to prose width. */
+  narrow?: boolean;
+}
+
+const { crumbs, narrow = false, ...seo } = Astro.props;
+---
+
+<BaseLayout {...seo} theme="light">
+  <div class="k-container k-content">
+    {crumbs && crumbs.length > 0 && <Breadcrumbs crumbs={crumbs} />}
+    <div class:list={["k-content__body", { "k-content__body--narrow": narrow }]}>
+      <slot />
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .k-content {
+    padding-block: 1.5rem 2rem;
+  }
+  .k-content__body {
+    margin-top: 1.25rem;
+  }
+  .k-content__body--narrow {
+    max-width: 46rem;
+    margin-inline: auto;
+  }
+</style>

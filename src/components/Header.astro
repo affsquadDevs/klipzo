@@ -1,0 +1,159 @@
+---
+import { t } from "../i18n";
+import { PHOTO_TOOLS, VIDEO_TOOLS } from "../lib/tools";
+
+const photo = PHOTO_TOOLS.filter((tool) => tool.status === "v1");
+const video = VIDEO_TOOLS.filter((tool) => tool.status === "v1");
+---
+
+<header class="k-header">
+  <div class="k-container k-header__inner">
+    <a href="/" class="k-header__brand" aria-label={t("brand.name")}>
+      <span class="k-logo" aria-hidden="true"></span>
+      <span>{t("brand.name")}</span>
+    </a>
+
+    <nav class="k-nav" aria-label="Primary">
+      <details class="k-menu">
+        <summary>{t("nav.photoTools")}</summary>
+        <div class="k-menu__panel">
+          {photo.map((tool) => <a href={`/${tool.slug}`}>{tool.label}</a>)}
+        </div>
+      </details>
+
+      <details class="k-menu">
+        <summary>{t("nav.videoTools")}</summary>
+        <div class="k-menu__panel">
+          {video.map((tool) => <a href={`/${tool.slug}`}>{tool.label}</a>)}
+        </div>
+      </details>
+
+      <a href="/guides" class="k-nav__link">{t("nav.guides")}</a>
+      <a href="/how-it-works" class="k-nav__link">{t("nav.howItWorks")}</a>
+    </nav>
+
+    <a href="/editor" class="k-btn k-btn-primary k-header__cta">{t("nav.editor")}</a>
+  </div>
+</header>
+
+<style>
+  .k-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+    backdrop-filter: saturate(1.4) blur(8px);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .k-header__inner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    height: var(--spacing-toolbar);
+  }
+  .k-header__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--color-fg);
+    letter-spacing: -0.02em;
+  }
+  .k-logo {
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 6px;
+    background: linear-gradient(135deg, var(--color-accent), #8a5cff);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2);
+  }
+  .k-nav {
+    display: none;
+    align-items: center;
+    gap: 0.35rem;
+    margin-left: auto;
+  }
+  .k-nav__link {
+    padding: 0.45rem 0.7rem;
+    border-radius: var(--radius-md);
+    color: var(--color-fg-muted);
+    font-weight: 520;
+    font-size: 0.925rem;
+  }
+  .k-nav__link:hover {
+    color: var(--color-fg);
+    background: var(--color-surface-2);
+  }
+  .k-menu {
+    position: relative;
+  }
+  .k-menu > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 0.45rem 0.7rem;
+    border-radius: var(--radius-md);
+    color: var(--color-fg-muted);
+    font-weight: 520;
+    font-size: 0.925rem;
+  }
+  .k-menu > summary::-webkit-details-marker {
+    display: none;
+  }
+  .k-menu[open] > summary,
+  .k-menu > summary:hover {
+    color: var(--color-fg);
+    background: var(--color-surface-2);
+  }
+  .k-menu__panel {
+    position: absolute;
+    top: calc(100% + 0.4rem);
+    left: 0;
+    min-width: 13rem;
+    display: grid;
+    gap: 0.1rem;
+    padding: 0.4rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-panel);
+  }
+  .k-menu__panel a {
+    padding: 0.5rem 0.6rem;
+    border-radius: var(--radius-sm);
+    color: var(--color-fg-muted);
+    font-size: 0.9rem;
+  }
+  .k-menu__panel a:hover {
+    color: var(--color-fg);
+    background: var(--color-surface-2);
+  }
+  .k-header__cta {
+    margin-left: auto;
+  }
+
+  @media (min-width: 860px) {
+    .k-nav {
+      display: flex;
+    }
+    .k-header__cta {
+      margin-left: 0.5rem;
+    }
+  }
+</style>
+
+<script>
+  // Close any open disclosure menu when clicking outside or pressing Escape.
+  document.addEventListener("click", (e) => {
+    const target = e.target as HTMLElement;
+    document.querySelectorAll<HTMLDetailsElement>(".k-menu[open]").forEach((menu) => {
+      if (!menu.contains(target)) menu.removeAttribute("open");
+    });
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      document
+        .querySelectorAll<HTMLDetailsElement>(".k-menu[open]")
+        .forEach((m) => m.removeAttribute("open"));
+    }
+  });
+</script>

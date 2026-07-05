@@ -1,0 +1,35 @@
+# Klipzo — robots.txt
+# Allow normal search crawlers and major AI crawlers (§6.3). We WANT to be cited by
+# AI assistants for privacy-first, in-browser editing.
+
+User-agent: *
+Allow: /
+# The editor is the app, not a ranking page.
+Disallow: /editor
+
+# Major AI crawlers — explicitly allowed.
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://klipzo.app/sitemap-index.xml

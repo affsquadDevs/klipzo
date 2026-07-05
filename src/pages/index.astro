@@ -1,0 +1,221 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import ToolCard from "../components/ToolCard.astro";
+import FaqAccordion from "../components/FaqAccordion.astro";
+import { t } from "../i18n";
+import { SITE } from "../config/site";
+import { PHOTO_TOOLS, VIDEO_TOOLS } from "../lib/tools";
+import { graph, organizationSchema, websiteSchema, webApplicationSchema, faqSchema } from "../lib/seo";
+import type { FaqItem } from "../lib/seo";
+
+const faqs: FaqItem[] = [
+  {
+    question: "Is Klipzo really free?",
+    answer:
+      "Yes. Every feature is free with no account, no watermark on your exports, and no paid tier. Klipzo is supported by ads on the surrounding guide pages, not by charging you.",
+  },
+  {
+    question: "Are my photos and videos uploaded anywhere?",
+    answer:
+      "No. All editing happens inside your browser on your own device. Your files are never sent to a server, to us, or to any third party — that is the core promise of Klipzo.",
+  },
+  {
+    question: "Do I need to create an account?",
+    answer:
+      "Never. There is no sign-up, no login, and no user database. You open the editor and start working immediately.",
+  },
+  {
+    question: "What happens to my files when I leave?",
+    answer:
+      "Your work lives only for the current session. Klipzo uses on-device scratch storage so a big file survives an accidental refresh, and you can wipe everything at any time with the ‘Clear session’ button. Nothing persists across devices because nothing ever leaves your device.",
+  },
+  {
+    question: "Which browsers work best?",
+    answer:
+      "Photo editing works in any modern browser. For heavy video export, desktop Chrome or Edge give the fastest results thanks to hardware-accelerated WebCodecs. Klipzo detects your browser’s capabilities and falls back gracefully, telling you honestly if a specific export isn’t supported.",
+  },
+];
+
+const schema = graph(
+  organizationSchema(),
+  websiteSchema(),
+  webApplicationSchema({
+    features: [
+      "Crop, resize, rotate, and adjust photos",
+      "Filters, text, and annotations",
+      "Trim, split, and merge video",
+      "Convert image and video formats",
+      "Video to GIF, extract audio",
+      "Export with no watermark, EXIF stripped",
+    ],
+  }),
+  faqSchema(faqs),
+);
+---
+
+<BaseLayout title={`${SITE.brand} — Free In-Browser Photo & Video Editor`} description={SITE.description} theme="light" schema={[schema]}>
+  <!-- Hero -->
+  <section class="k-hero">
+    <div class="k-container">
+      <p class="k-hero__eyebrow">🔒 100% on-device · nothing uploaded</p>
+      <h1 class="k-hero__title">{t("home.hero.title")}</h1>
+      <p class="k-hero__subtitle">{t("home.hero.subtitle")}</p>
+      <div class="k-hero__actions">
+        <a href="/editor" class="k-btn k-btn-primary k-hero__cta">{t("home.hero.ctaPrimary")}</a>
+        <a href="/how-it-works" class="k-btn k-btn-ghost">{t("home.hero.ctaSecondary")}</a>
+      </div>
+      <ul class="k-hero__trust">
+        <li>✓ {t("home.trust.noUpload")}</li>
+        <li>✓ {t("home.trust.noAccount")}</li>
+        <li>✓ {t("home.trust.onDevice")}</li>
+        <li>✓ {t("home.trust.free")}</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Photo tools -->
+  <section class="k-container k-section">
+    <div class="k-section__head">
+      <h2>Photo tools</h2>
+      <p>Edit, convert, and optimize images — instantly, in your browser.</p>
+    </div>
+    <div class="k-grid">
+      {PHOTO_TOOLS.map((tool) => <ToolCard tool={tool} />)}
+    </div>
+  </section>
+
+  <!-- Video tools -->
+  <section class="k-container k-section">
+    <div class="k-section__head">
+      <h2>Video tools</h2>
+      <p>Trim, convert, and reframe video with hardware-accelerated WebCodecs.</p>
+    </div>
+    <div class="k-grid">
+      {VIDEO_TOOLS.map((tool) => <ToolCard tool={tool} />)}
+    </div>
+  </section>
+
+  <!-- Why private -->
+  <section class="k-container k-section">
+    <div class="k-why">
+      <div class="k-why__item k-card">
+        <h3>🔒 Nothing leaves your device</h3>
+        <p>Your media is decoded, edited, and exported entirely in the browser. No upload, no cloud, no exposure.</p>
+      </div>
+      <div class="k-why__item k-card">
+        <h3>⚡ Instant, no round-trip</h3>
+        <p>There is no server to wait on. Open a file and start editing immediately — even large videos.</p>
+      </div>
+      <div class="k-why__item k-card">
+        <h3>🙅 No account, no watermark</h3>
+        <p>No sign-up, no email, no “pro” upsell. Export clean files at full quality, free.</p>
+      </div>
+    </div>
+    <p class="k-why__cta">
+      <a href="/how-it-works" class="k-btn k-btn-ghost">Learn how on-device editing works →</a>
+    </p>
+  </section>
+
+  <!-- FAQ -->
+  <section class="k-container k-section">
+    <FaqAccordion items={faqs} />
+  </section>
+</BaseLayout>
+
+<style>
+  .k-hero {
+    padding-block: clamp(3rem, 8vw, 6rem) clamp(2rem, 5vw, 4rem);
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, color-mix(in srgb, var(--color-accent) 14%, transparent), transparent 70%);
+    text-align: center;
+  }
+  .k-hero__eyebrow {
+    display: inline-block;
+    font-size: 0.82rem;
+    color: var(--color-fg-muted);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    margin-bottom: 1.25rem;
+  }
+  .k-hero__title {
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: 720;
+    line-height: 1.05;
+    max-width: 20ch;
+    margin-inline: auto;
+  }
+  .k-hero__subtitle {
+    margin: 1.1rem auto 0;
+    max-width: 42rem;
+    font-size: clamp(1rem, 2vw, 1.2rem);
+    color: var(--color-fg-muted);
+    line-height: 1.6;
+  }
+  .k-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+    margin-top: 1.75rem;
+  }
+  .k-hero__cta {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+  .k-hero__trust {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
+    justify-content: center;
+    margin-top: 2rem;
+    color: var(--color-fg-subtle);
+    font-size: 0.88rem;
+  }
+  .k-section {
+    padding-block: clamp(2rem, 5vw, 3.5rem);
+  }
+  .k-section__head {
+    margin-bottom: 1.5rem;
+  }
+  .k-section__head h2 {
+    font-size: clamp(1.4rem, 3vw, 1.9rem);
+    font-weight: 680;
+  }
+  .k-section__head p {
+    color: var(--color-fg-muted);
+    margin-top: 0.35rem;
+  }
+  .k-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
+    gap: 0.85rem;
+  }
+  .k-why {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .k-why__item {
+    padding: 1.4rem;
+  }
+  .k-why__item h3 {
+    font-size: 1.1rem;
+    font-weight: 620;
+    margin-bottom: 0.5rem;
+  }
+  .k-why__item p {
+    color: var(--color-fg-muted);
+    line-height: 1.6;
+  }
+  .k-why__cta {
+    margin-top: 1.5rem;
+    text-align: center;
+  }
+  @media (min-width: 720px) {
+    .k-why {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+</style>

@@ -1,0 +1,41 @@
+# Klipzo
+
+> Klipzo is a free, privacy-first photo and video editor that runs entirely in the
+> user's browser. No account, no upload — user media never leaves the device. All
+> processing (crop, trim, convert, compress, GIF, export) happens on-device using
+> Canvas/WebGL for images and WebCodecs + Mediabunny for video.
+
+Klipzo is the answer to "free online photo/video editor with no sign-up that doesn't
+upload my files." It is genuinely private by architecture, not just by policy: there
+is no backend that receives media.
+
+## Editor
+- [Open the editor](https://klipzo.app/editor): The full in-browser photo & video editor.
+
+## Photo tools
+- [Crop image](https://klipzo.app/crop-image): Crop to any ratio or exact pixel size.
+- [Resize image](https://klipzo.app/resize-image): Resize by pixels or percentage.
+- [Compress image](https://klipzo.app/compress-image): Shrink JPEG/PNG/WebP on-device.
+- [Convert image](https://klipzo.app/convert-image): PNG, JPG, WebP conversion.
+- [PNG to JPG](https://klipzo.app/png-to-jpg): Convert PNG images to JPG.
+- [JPG to PNG](https://klipzo.app/jpg-to-png): Convert JPG images to lossless PNG.
+- [WebP converter](https://klipzo.app/webp-converter): Convert to/from WebP.
+- [Rotate image](https://klipzo.app/rotate-image): Rotate, flip, straighten photos.
+- [Add text to photo](https://klipzo.app/add-text-to-photo): Captions and watermarks.
+
+## Video tools
+- [Trim video](https://klipzo.app/trim-video): Cut and split video in the browser.
+- [Crop video](https://klipzo.app/crop-video): Crop and reframe video.
+- [Compress video](https://klipzo.app/compress-video): Reduce video file size on-device.
+- [Convert video](https://klipzo.app/convert-video): MP4 and WebM conversion.
+- [MP4 to WebM](https://klipzo.app/mp4-to-webm): Convert MP4 to WebM.
+- [Video to GIF](https://klipzo.app/video-to-gif): Make a GIF from a video clip.
+- [Extract audio](https://klipzo.app/extract-audio-from-video): Save audio as MP3/WAV.
+- [Add text to video](https://klipzo.app/add-text-to-video): Titles, captions, watermarks.
+- [Rotate video](https://klipzo.app/rotate-video): Fix video orientation.
+- [Resize for Instagram](https://klipzo.app/resize-video-for-instagram): Reels/feed/story presets.
+
+## Trust & how it works
+- [How it works](https://klipzo.app/how-it-works): Why nothing is uploaded.
+- [Privacy policy](https://klipzo.app/privacy-policy): What is and isn't collected.
+- [About](https://klipzo.app/about): Who builds Klipzo.

@@ -1,0 +1,54 @@
+---
+/**
+ * Per-page <head> metadata (§6.3): unique title/description, canonical, OG/Twitter.
+ * One <Seo> per page. JSON-LD is passed through to <JsonLd>.
+ */
+import { SITE } from "../config/site";
+import { abs } from "../lib/seo";
+import JsonLd from "./JsonLd.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  /** Canonical path, e.g. "/crop-image". Defaults to the current URL path. */
+  canonical?: string;
+  ogImage?: string;
+  ogType?: "website" | "article";
+  noindex?: boolean;
+  /** JSON-LD nodes to embed for this page. */
+  schema?: Array<object | undefined | null>;
+}
+
+const {
+  title,
+  description,
+  canonical,
+  ogImage = SITE.ogImage,
+  ogType = "website",
+  noindex = false,
+  schema,
+} = Astro.props;
+
+const canonicalUrl = abs(canonical ?? Astro.url.pathname);
+const fullTitle = title.includes(SITE.brand) ? title : `${title} — ${SITE.brand}`;
+const imageUrl = abs(ogImage);
+---
+
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonicalUrl} />
+{noindex && <meta name="robots" content="noindex, nofollow" />}
+
+<meta property="og:type" content={ogType} />
+<meta property="og:site_name" content={SITE.brand} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonicalUrl} />
+<meta property="og:image" content={imageUrl} />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={imageUrl} />
+
+{schema && schema.length > 0 && <JsonLd nodes={schema} />}

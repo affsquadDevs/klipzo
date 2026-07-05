@@ -1,0 +1,19 @@
+---
+/**
+ * Renders a JSON-LD <script>. Pass either a full graph object or an array of nodes
+ * (which will be wrapped). Undefined nodes are stripped to keep output clean.
+ */
+import { graph } from "../lib/seo";
+
+interface Props {
+  schema?: object;
+  nodes?: Array<object | undefined | null>;
+}
+
+const { schema, nodes } = Astro.props;
+const data = schema ?? graph(...(nodes ?? []));
+// Escape `<` to prevent breaking out of the <script> context.
+const json = JSON.stringify(data).replace(/</g, "\\u003c");
+---
+
+<script type="application/ld+json" is:inline set:html={json} />

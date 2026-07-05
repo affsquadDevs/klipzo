@@ -1,0 +1,86 @@
+---
+/**
+ * Reusable ad slot (§7). ALWAYS reserves a fixed height to prevent CLS. Renders a
+ * neutral dev placeholder unless a real AdSense publisher id is configured, in which
+ * case it emits a real <ins class="adsbygoogle"> unit that loads async/lazily.
+ *
+ * Placement rules (enforced by callers, not this component):
+ *  - Content/landing/guide pages only, below the fold.
+ *  - On the editor route: at most ONE slot, never over the canvas/controls, never on
+ *    empty/processing/error states. Never inside the isolated /editor exception route.
+ */
+import { MONETIZATION, isConfigured } from "../../config/site";
+
+interface Props {
+  /** AdSense slot id (data-ad-slot). */
+  slot?: string;
+  /** Reserved height in px (mobile) — desktop can grow via `format`. */
+  minHeight?: number;
+  format?: "auto" | "fluid" | "rectangle" | "horizontal";
+  label?: string;
+  class?: string;
+}
+
+const {
+  slot,
+  minHeight = 280,
+  format = "auto",
+  label = "Advertisement",
+  class: className = "",
+} = Astro.props;
+
+const publisher = isConfigured(MONETIZATION.adsensePublisherId)
+  ? MONETIZATION.adsensePublisherId
+  : null;
+const live = Boolean(publisher && slot);
+---
+
+<aside
+  class:list={["k-adslot-wrap", className]}
+  style={`min-height:${minHeight}px`}
+  aria-label={label}
+  data-ad-container
+>
+  <span class="k-adslot-label">{label}</span>
+  {
+    live ? (
+      <ins
+        class="adsbygoogle"
+        style={`display:block;min-height:${minHeight}px`}
+        data-ad-client={publisher}
+        data-ad-slot={slot}
+        data-ad-format={format}
+        data-full-width-responsive="true"
+      />
+    ) : (
+      <div class="k-adslot" style={`min-height:${minHeight}px`}>
+        Ad slot ({minHeight}px reserved) — inactive until a publisher id is set
+      </div>
+    )
+  }
+</aside>
+
+{
+  live && (
+    <script is:inline>
+      {`(adsbygoogle = window.adsbygoogle || []).push({});`}
+    </script>
+  )
+}
+
+<style>
+  .k-adslot-wrap {
+    display: block;
+    width: 100%;
+    margin-block: 1.5rem;
+  }
+  .k-adslot-label {
+    display: block;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-fg-subtle);
+    margin-bottom: 0.35rem;
+    text-align: center;
+  }
+</style>

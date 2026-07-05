@@ -1,0 +1,121 @@
+---
+import { t } from "../i18n";
+import { SITE, ORG, isConfigured } from "../config/site";
+import { PHOTO_TOOLS, VIDEO_TOOLS } from "../lib/tools";
+import { formatDate } from "../i18n/format";
+
+const year = formatDate(new Date("2026-01-01"), { year: "numeric" });
+const legalName = isConfigured(ORG.legalName) ? ORG.legalName : SITE.brand;
+const photo = PHOTO_TOOLS.filter((x) => x.status === "v1").slice(0, 6);
+const video = VIDEO_TOOLS.filter((x) => x.status === "v1").slice(0, 6);
+---
+
+<footer class="k-footer">
+  <div class="k-container k-footer__grid">
+    <div class="k-footer__brand">
+      <a href="/" class="k-header__brand" style="color:var(--color-fg)">
+        <span class="k-logo" aria-hidden="true"></span>
+        <span>{t("brand.name")}</span>
+      </a>
+      <p class="k-footer__pitch">{t("brand.tagline")}</p>
+      <p class="k-footer__trust">🔒 {t("home.trust.noUpload")} · {t("home.trust.onDevice")}</p>
+    </div>
+
+    <div class="k-footer__col">
+      <h3>{t("nav.photoTools")}</h3>
+      <ul>{photo.map((x) => <li><a href={`/${x.slug}`}>{x.label}</a></li>)}</ul>
+    </div>
+
+    <div class="k-footer__col">
+      <h3>{t("nav.videoTools")}</h3>
+      <ul>{video.map((x) => <li><a href={`/${x.slug}`}>{x.label}</a></li>)}</ul>
+    </div>
+
+    <div class="k-footer__col">
+      <h3>Company</h3>
+      <ul>
+        <li><a href="/how-it-works">{t("footer.howItWorks")}</a></li>
+        <li><a href="/about">{t("footer.about")}</a></li>
+        <li><a href="/guides">{t("nav.guides")}</a></li>
+        <li><a href="/editorial-policy">{t("footer.editorial")}</a></li>
+        <li><a href="/contact">{t("footer.contact")}</a></li>
+      </ul>
+    </div>
+
+    <div class="k-footer__col">
+      <h3>Legal</h3>
+      <ul>
+        <li><a href="/privacy-policy">{t("footer.privacy")}</a></li>
+        <li><a href="/terms">{t("footer.terms")}</a></li>
+        <li><a href="/disclaimer">{t("footer.disclaimer")}</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="k-container k-footer__bar">
+    <p>© {year} {legalName}. {t("footer.rights")}</p>
+    <p class="k-footer__note">{t("footer.builtBy")}</p>
+  </div>
+</footer>
+
+<style>
+  .k-footer {
+    margin-top: 4rem;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface);
+  }
+  .k-footer__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    padding-block: 3rem 2rem;
+  }
+  .k-footer__brand {
+    max-width: 22rem;
+  }
+  .k-footer__pitch {
+    margin-top: 0.75rem;
+    color: var(--color-fg-muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+  .k-footer__trust {
+    margin-top: 0.75rem;
+    color: var(--color-fg-subtle);
+    font-size: 0.8rem;
+  }
+  .k-footer__col h3 {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-fg-subtle);
+    margin-bottom: 0.75rem;
+  }
+  .k-footer__col ul {
+    display: grid;
+    gap: 0.5rem;
+  }
+  .k-footer__col a {
+    color: var(--color-fg-muted);
+    font-size: 0.9rem;
+  }
+  .k-footer__col a:hover {
+    color: var(--color-fg);
+  }
+  .k-footer__bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    justify-content: space-between;
+    padding-block: 1.25rem;
+    border-top: 1px solid var(--color-border);
+    color: var(--color-fg-subtle);
+    font-size: 0.82rem;
+  }
+
+  @media (min-width: 720px) {
+    .k-footer__grid {
+      grid-template-columns: 1.4fr repeat(4, 1fr);
+    }
+  }
+</style>

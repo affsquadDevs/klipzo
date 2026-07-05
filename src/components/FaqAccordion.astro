@@ -1,0 +1,74 @@
+---
+import { t } from "../i18n";
+import type { FaqItem } from "../lib/seo";
+
+interface Props {
+  items: FaqItem[];
+  heading?: string;
+}
+const { items, heading } = Astro.props;
+---
+
+<section class="k-faq" aria-label={heading ?? t("generic.faq")}>
+  <h2>{heading ?? t("generic.faq")}</h2>
+  <div class="k-faq__list">
+    {
+      items.map((item) => (
+        <details class="k-faq__item">
+          <summary>{item.question}</summary>
+          <div class="k-faq__answer">
+            <p>{item.answer}</p>
+          </div>
+        </details>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .k-faq {
+    margin-top: 2.5rem;
+  }
+  .k-faq > h2 {
+    font-size: 1.5rem;
+    font-weight: 650;
+    margin-bottom: 1rem;
+  }
+  .k-faq__list {
+    display: grid;
+    gap: 0.6rem;
+  }
+  .k-faq__item {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    overflow: hidden;
+  }
+  .k-faq__item > summary {
+    cursor: pointer;
+    padding: 1rem 1.1rem;
+    font-weight: 560;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+  }
+  .k-faq__item > summary::-webkit-details-marker {
+    display: none;
+  }
+  .k-faq__item > summary::after {
+    content: "+";
+    color: var(--color-fg-subtle);
+    font-size: 1.2rem;
+    line-height: 1;
+  }
+  .k-faq__item[open] > summary::after {
+    content: "–";
+  }
+  .k-faq__answer {
+    padding: 0 1.1rem 1.1rem;
+    color: var(--color-fg-muted);
+    line-height: 1.6;
+  }
+</style>

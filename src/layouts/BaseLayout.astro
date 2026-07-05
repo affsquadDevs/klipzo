@@ -1,0 +1,105 @@
+---
+/**
+ * Root HTML shell for every page. Content pages use this directly; the editor
+ * route wraps its own island inside it. Keeps the editor bundle OFF content pages
+ * by only importing React islands on pages that opt in (§3.1).
+ */
+import "@fontsource-variable/inter";
+import "../styles/global.css";
+
+import { SITE } from "../config/site";
+import Seo from "../components/Seo.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import ConsentAnalytics from "../components/monetization/ConsentAnalytics.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  canonical?: string;
+  ogImage?: string;
+  ogType?: "website" | "article";
+  noindex?: boolean;
+  schema?: Array<object | undefined | null>;
+  /** Default theme for this page. Content pages: light. Editor: dark. */
+  theme?: "light" | "dark";
+  /** Hide the chrome (header/footer) for the full-bleed editor. */
+  bareChrome?: boolean;
+  /** Extra classes on <main>. */
+  mainClass?: string;
+}
+
+const {
+  title,
+  description,
+  canonical,
+  ogImage,
+  ogType,
+  noindex,
+  schema,
+  theme = "light",
+  bareChrome = false,
+  mainClass = "",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en" data-theme={theme}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content={SITE.themeColor} />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    {/* Set theme before paint to avoid a flash; respects a saved choice. */}
+    <script is:inline data-default-theme={theme}>
+      (function () {
+        try {
+          var d = document.documentElement;
+          var saved = localStorage.getItem("klipzo-theme");
+          if (saved === "light" || saved === "dark") d.setAttribute("data-theme", saved);
+        } catch (e) {}
+      })();
+    </script>
+
+    <Seo
+      title={title}
+      description={description}
+      canonical={canonical}
+      ogImage={ogImage}
+      ogType={ogType}
+      noindex={noindex}
+      schema={schema}
+    />
+
+    <ConsentAnalytics />
+  </head>
+  <body>
+    <a href="#main" class="k-skip-link">Skip to content</a>
+    {!bareChrome && <Header />}
+    <main id="main" class={mainClass}>
+      <slot />
+    </main>
+    {!bareChrome && <Footer />}
+
+    <style>
+      .k-skip-link {
+        position: fixed;
+        left: 0.5rem;
+        top: -3rem;
+        z-index: 100;
+        background: var(--color-accent);
+        color: var(--color-accent-contrast);
+        padding: 0.5rem 0.9rem;
+        border-radius: var(--radius-md);
+        transition: top 0.15s ease;
+      }
+      .k-skip-link:focus {
+        top: 0.5rem;
+      }
+    </style>
+  </body>
+</html>

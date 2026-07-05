@@ -1,0 +1,64 @@
+---
+/**
+ * Consent Mode v2 default + tag loaders (§7, §9). Head-level.
+ *
+ * Order matters:
+ *   1. Consent Mode default = DENIED (esp. EEA/UK/CH) BEFORE any tag loads.
+ *   2. GTM (which contains GA4) — consent-gated.
+ *   3. AdSense loader — async, after content; only when a real publisher id is set.
+ *
+ * A Google-certified CMP (§7) is responsible for calling gtag('consent','update', …)
+ * once the user chooses. The banner UI + CMP wiring lives in <ConsentBanner>. This
+ * component only renders live tags when the corresponding id is configured; with
+ * placeholders it emits nothing, so dev + AdSense-review-before-launch stay clean.
+ */
+import { MONETIZATION, isConfigured } from "../../config/site";
+
+const gtm = isConfigured(MONETIZATION.gtmContainerId) ? MONETIZATION.gtmContainerId : null;
+const adsense = isConfigured(MONETIZATION.adsensePublisherId)
+  ? MONETIZATION.adsensePublisherId
+  : null;
+const anyTag = gtm || adsense;
+---
+
+{
+  anyTag && (
+    <>
+      {/* 1. Consent Mode v2 — default denied until the CMP updates it. */}
+      <script is:inline>
+        {`
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('consent', 'default', {
+          ad_storage: 'denied',
+          ad_user_data: 'denied',
+          ad_personalization: 'denied',
+          analytics_storage: 'denied',
+          functionality_storage: 'granted',
+          security_storage: 'granted',
+          wait_for_update: 500
+        });
+        gtag('set', 'ads_data_redaction', true);
+        gtag('set', 'url_passthrough', true);
+        `}
+      </script>
+    </>
+  )
+}
+
+{
+  gtm && (
+    <script is:inline set:html={`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtm}');`} />
+  )
+}
+
+{
+  adsense && (
+    <script
+      is:inline
+      async
+      src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsense}`}
+      crossorigin="anonymous"
+    />
+  )
+}

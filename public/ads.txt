@@ -1,0 +1,4 @@
+# Klipzo ads.txt (§7)
+# Replace the placeholder publisher id with your real ca-pub value on launch.
+# Format: <domain>, <publisher id>, <relationship>, <certification authority id>
+google.com, __ADSENSE_PUBLISHER_ID__, DIRECT, f08c47fec0942fa0

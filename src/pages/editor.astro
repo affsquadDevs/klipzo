@@ -1,0 +1,39 @@
+---
+/**
+ * The editor route (§3.1). Full-bleed, no header/footer chrome, noindex (it is the
+ * app, not a ranking page). The React editor island is loaded client:only so NONE of
+ * its code is server-rendered or shipped to content pages. Deep-links: /editor?tool=…
+ */
+import BaseLayout from "../layouts/BaseLayout.astro";
+import EditorApp from "../editor/EditorApp.tsx";
+import { SITE } from "../config/site";
+---
+
+<BaseLayout
+  title={`${SITE.brand} Editor`}
+  description="Free in-browser photo & video editor. Nothing is uploaded."
+  theme="dark"
+  bareChrome={true}
+  noindex={true}
+  mainClass="k-editor-main"
+>
+  <EditorApp client:only="react" />
+  <div slot="fallback" class="k-editor-loading">Loading editor…</div>
+</BaseLayout>
+
+<style is:global>
+  html,
+  body {
+    height: 100%;
+  }
+  .k-editor-main {
+    height: 100dvh;
+    overflow: hidden;
+  }
+  .k-editor-loading {
+    display: grid;
+    place-items: center;
+    height: 100dvh;
+    color: var(--color-fg-muted);
+  }
+</style>
