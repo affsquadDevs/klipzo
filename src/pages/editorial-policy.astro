@@ -1,0 +1,78 @@
+---
+import ContentLayout from "../layouts/ContentLayout.astro";
+import { formatDate } from "../i18n/format";
+import { breadcrumbSchema, organizationSchema, type Crumb } from "../lib/seo";
+
+const crumbs: Crumb[] = [
+  { name: "Home", path: "/" },
+  { name: "Editorial Policy", path: "/editorial-policy" },
+];
+const updated = formatDate(new Date("2026-07-05"));
+---
+
+<ContentLayout
+  title="Editorial Policy"
+  description="How Klipzo’s guides and tool pages are written, reviewed, and kept accurate — and our standards for honesty about what the tools can and can’t do."
+  canonical="/editorial-policy"
+  crumbs={crumbs}
+  schema={[organizationSchema(), breadcrumbSchema(crumbs)]}
+  narrow
+>
+  <article class="k-prose">
+    <h1>Editorial Policy</h1>
+    <p class="k-updated">Last updated: {updated}</p>
+
+    <p>
+      Klipzo’s guides and tool pages exist to help you get a real task done. This policy describes how
+      we write and maintain them, and the standards we hold ourselves to.
+    </p>
+
+    <h2>Accuracy first</h2>
+    <p>
+      Every how-to describes steps you can actually perform in the Klipzo editor. We test the workflow
+      before we publish it. If a feature is still rolling out or works only in certain browsers, we
+      say so plainly rather than overselling it.
+    </p>
+
+    <h2>Honesty about limitations</h2>
+    <p>
+      Browser-based editing has real constraints — for example, heavy video export is fastest on
+      desktop Chrome or Edge, and some codecs aren’t supported everywhere. We tell you the truth about
+      these limits, including when a specific export won’t work on your current browser, instead of
+      pretending everything works everywhere.
+    </p>
+
+    <h2>Written by people who edit</h2>
+    <p>
+      Our content is created by people with hands-on photo and video editing experience, not spun from
+      templates. Where a claim needs a source (for example, browser support or a technical detail), we
+      link to a primary reference.
+    </p>
+
+    <h2>Independence</h2>
+    <p>
+      Guides recommend the approach that actually solves your problem. Advertising on our pages never
+      influences the substance of a tutorial, and ads are kept off the editing canvas entirely.
+    </p>
+
+    <h2>Updates &amp; corrections</h2>
+    <p>
+      We revise articles as the product and the web platform evolve, and we show a “Last updated” date
+      on our content. If you spot an error, tell us via the <a href="/contact">Contact page</a> and
+      we’ll fix it.
+    </p>
+
+    <h2>Corrections we’ve made</h2>
+    <p>
+      Significant corrections are reflected in the update date on the relevant page. We aim to correct
+      factual errors quickly rather than quietly.
+    </p>
+  </article>
+</ContentLayout>
+
+<style>
+  .k-updated {
+    color: var(--color-fg-subtle);
+    font-size: 0.85rem;
+  }
+</style>

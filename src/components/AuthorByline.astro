@@ -1,0 +1,62 @@
+---
+/**
+ * Author byline card (§8 E-E-A-T). Uses the configured author, or a clearly-labeled
+ * editorial fallback until AUTHOR_* is filled in (see CONFIG-TODO.md).
+ */
+import { AUTHOR, isConfigured } from "../config/site";
+
+const name = isConfigured(AUTHOR.name) ? AUTHOR.name : "Klipzo Editorial Team";
+const credentials = isConfigured(AUTHOR.credentials)
+  ? AUTHOR.credentials
+  : "Photo & video editing";
+const hasPhoto = isConfigured(AUTHOR.name); // only show the photo slot once a real author exists
+---
+
+<div class="byline">
+  {
+    hasPhoto ? (
+      <img class="byline__avatar" src={AUTHOR.photo} alt={name} width="40" height="40" loading="lazy" />
+    ) : (
+      <span class="byline__avatar byline__avatar--placeholder" aria-hidden>K</span>
+    )
+  }
+  <span class="byline__text">
+    <a href="/about" class="byline__name">{name}</a>
+    <span class="byline__cred">{credentials}</span>
+  </span>
+</div>
+
+<style>
+  .byline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .byline__avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    object-fit: cover;
+    background: var(--color-surface-2);
+  }
+  .byline__avatar--placeholder {
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    color: var(--color-accent-contrast);
+    background: linear-gradient(135deg, var(--color-accent), #8a5cff);
+  }
+  .byline__text {
+    display: grid;
+    line-height: 1.3;
+  }
+  .byline__name {
+    font-weight: 600;
+    color: var(--color-fg);
+    font-size: 0.9rem;
+  }
+  .byline__cred {
+    font-size: 0.78rem;
+    color: var(--color-fg-subtle);
+  }
+</style>

@@ -1,0 +1,134 @@
+---
+import ContentLayout from "../layouts/ContentLayout.astro";
+import { SITE, ORG, isConfigured } from "../config/site";
+import { formatDate } from "../i18n/format";
+import { breadcrumbSchema, organizationSchema, type Crumb } from "../lib/seo";
+
+const crumbs: Crumb[] = [
+  { name: "Home", path: "/" },
+  { name: "Privacy Policy", path: "/privacy-policy" },
+];
+const updated = formatDate(new Date("2026-07-05"));
+const org = isConfigured(ORG.legalName) ? ORG.legalName : SITE.brand;
+const email = isConfigured(ORG.contactEmail) ? ORG.contactEmail : "the address on our Contact page";
+---
+
+<ContentLayout
+  title="Privacy Policy"
+  description="Klipzo never uploads or stores your media. This policy explains the limited, anonymous data we do process for ads and analytics, and your rights."
+  canonical="/privacy-policy"
+  crumbs={crumbs}
+  schema={[organizationSchema(), breadcrumbSchema(crumbs)]}
+  narrow
+>
+  <article class="k-prose">
+    <h1>Privacy Policy</h1>
+    <p class="k-updated">Last updated: {updated}</p>
+
+    <p>
+      This policy explains how {org} (“Klipzo”, “we”) handles data on {SITE.domain}. The short
+      version: <strong>your photos and videos never leave your device</strong>, and we collect no
+      personal accounts. We do use advertising and anonymous analytics on our website pages, which
+      is what this policy mostly covers.
+    </p>
+
+    <h2>1. Your media is never uploaded</h2>
+    <p>
+      Klipzo is a client-side application. Every photo and video you open is processed entirely in
+      your browser on your own device. We do not upload, receive, transmit, store, or have any
+      access to your media files, their contents, their file names, or any thumbnails or data
+      derived from them. There is no server that receives your files. See
+      <a href="/how-it-works">How it works</a> for the technical detail and how to verify this.
+    </p>
+
+    <h2>2. No accounts, no personal profiles</h2>
+    <p>
+      There is no sign-up, login, or user database. We do not ask for your name, email, or any
+      personal identifier to use the editor, and we do not build a profile of you.
+    </p>
+
+    <h2>3. Anonymous usage analytics</h2>
+    <p>
+      We use Google Analytics 4 (via Google Tag Manager) to understand, in aggregate, which tools
+      are used and whether features work — for example, that an “export completed” event occurred.
+      These events are anonymous and contain no media-derived data. We never send file names, file
+      contents, thumbnails, or anything extracted from your files to analytics. Analytics runs only
+      after you consent where consent is required (see section 6).
+    </p>
+
+    <h2>4. Advertising</h2>
+    <p>
+      Our guide and landing pages display ads through Google AdSense. Google and its partners may
+      use cookies and similar technologies to serve and measure ads. Depending on your consent and
+      region, these may include personalized or non-personalized advertising. Google’s use of
+      advertising cookies is described in
+      <a href="https://policies.google.com/technologies/ads" rel="noopener nofollow" target="_blank"
+        >Google’s advertising policies</a
+      >. We do not place ads inside the editing canvas, and ads never receive your media.
+    </p>
+
+    <h2>5. Cookies &amp; local storage</h2>
+    <ul>
+      <li>
+        <strong>Consent &amp; preferences</strong> — small local storage entries remember your
+        cookie choices and theme. These are essential and stay on your device.
+      </li>
+      <li>
+        <strong>On-device scratch (OPFS/IndexedDB)</strong> — used to hold your working project
+        locally during a session. Never uploaded; clearable via “Clear session”; wiped on tab close.
+      </li>
+      <li>
+        <strong>Analytics &amp; advertising cookies</strong> — set by Google only after consent
+        where required, for the purposes above.
+      </li>
+    </ul>
+
+    <h2>6. Consent (GDPR / UK GDPR)</h2>
+    <p>
+      For visitors in the EEA, the UK, and Switzerland, advertising and analytics cookies are set to
+      <strong>denied by default</strong> and only enabled if you agree via our consent banner, using
+      a Google-certified consent management platform and Google Consent Mode v2. You can change or
+      withdraw your choice at any time from the “Cookie choices” control.
+    </p>
+
+    <h2>7. Your rights</h2>
+    <p>
+      Because we don’t collect your media or hold user accounts, we have very little data about you.
+      To the extent applicable data protection law (including the GDPR and the California Consumer
+      Privacy Act) gives you rights over data processed for ads/analytics, you may:
+    </p>
+    <ul>
+      <li>Withdraw or change consent for advertising and analytics cookies at any time.</li>
+      <li>Request information about, or deletion of, any data associated with you.</li>
+      <li>Opt out of the “sale” or “sharing” of personal information as defined by the CCPA.</li>
+    </ul>
+    <p>
+      For ad-related data held by Google, you can also use
+      <a href="https://myadcenter.google.com" rel="noopener nofollow" target="_blank">Google’s My Ad Center</a>.
+    </p>
+
+    <h2>8. Children</h2>
+    <p>
+      Klipzo is a general-audience tool and is not directed at children under 13 (or the applicable
+      age in your region). We do not knowingly collect personal data from children.
+    </p>
+
+    <h2>9. Changes</h2>
+    <p>
+      We may update this policy as the product or legal requirements change. Material changes will be
+      reflected in the “Last updated” date above.
+    </p>
+
+    <h2>10. Contact</h2>
+    <p>
+      Questions about privacy? Reach us via {email} or our <a href="/contact">Contact page</a>.
+    </p>
+  </article>
+</ContentLayout>
+
+<style>
+  .k-updated {
+    color: var(--color-fg-subtle);
+    font-size: 0.85rem;
+  }
+</style>

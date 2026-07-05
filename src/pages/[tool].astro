@@ -1,0 +1,247 @@
+---
+import ContentLayout from "../layouts/ContentLayout.astro";
+import FaqAccordion from "../components/FaqAccordion.astro";
+import ToolCard from "../components/ToolCard.astro";
+import AdSlot from "../components/monetization/AdSlot.astro";
+import { ALL_TOOLS, getTool, type Tool } from "../lib/tools";
+import { getToolContent } from "../content/tools";
+import {
+  webApplicationSchema,
+  howToSchema,
+  faqSchema,
+  breadcrumbSchema,
+  organizationSchema,
+  type FaqItem,
+  type Crumb,
+} from "../lib/seo";
+
+export function getStaticPaths() {
+  return ALL_TOOLS.map((tool) => ({ params: { tool: tool.slug }, props: { tool } }));
+}
+
+interface Props {
+  tool: Tool;
+}
+const { tool } = Astro.props;
+const content = getToolContent(tool.slug);
+
+const kindLabel = tool.kind === "photo" ? "Photo tools" : "Video tools";
+const kindHub = tool.kind === "photo" ? "/#photo-tools" : "/#video-tools";
+const crumbs: Crumb[] = [
+  { name: "Home", path: "/" },
+  { name: kindLabel, path: kindHub },
+  { name: tool.label, path: `/${tool.slug}` },
+];
+
+const editorHref = `/editor?tool=${encodeURIComponent(tool.editorPreset)}`;
+const intro = content?.intro ?? tool.description;
+
+const faqs: FaqItem[] = content?.faqs ?? [
+  {
+    question: `Is ${tool.label.toLowerCase()} free and private on Klipzo?`,
+    answer:
+      "Yes. It’s completely free with no account and no watermark, and it runs entirely in your browser — your file is never uploaded.",
+  },
+];
+
+// Related tools (fall back to same-kind tools).
+const relatedSlugs =
+  content?.related ??
+  ALL_TOOLS.filter((t) => t.kind === tool.kind && t.slug !== tool.slug)
+    .slice(0, 4)
+    .map((t) => t.slug);
+const related = relatedSlugs.map((s) => getTool(s)).filter((t): t is Tool => Boolean(t));
+
+const schema = [
+  organizationSchema(),
+  webApplicationSchema({ name: `${tool.label} — Klipzo`, url: `/${tool.slug}` }),
+  breadcrumbSchema(crumbs),
+  content?.howTo
+    ? howToSchema({
+        name: content.howTo.title,
+        description: content.howTo.description,
+        totalTime: content.howTo.totalTime,
+        steps: content.howTo.steps,
+      })
+    : undefined,
+  faqSchema(faqs),
+];
+---
+
+<ContentLayout
+  title={tool.title}
+  description={tool.description}
+  canonical={`/${tool.slug}`}
+  crumbs={crumbs}
+  schema={schema}
+>
+  <article class="tool">
+    <header class="tool__hero">
+      <p class="tool__eyebrow">🔒 Free · No sign-up · Nothing uploaded</p>
+      <h1>{tool.h1}</h1>
+      <p class="tool__intro">{intro}</p>
+      <div class="tool__cta">
+        <a href={editorHref} class="k-btn k-btn-primary tool__ctabtn">Open in the editor →</a>
+        <span class="tool__ctanote">Opens instantly. Your file stays on your device.</span>
+      </div>
+    </header>
+
+    {content?.body && <p class="tool__body k-prose">{content.body}</p>}
+
+    {
+      content?.howTo && (
+        <section class="tool__section">
+          <h2>{content.howTo.title}</h2>
+          <ol class="tool__steps">
+            {content.howTo.steps.map((step) => (
+              <li>
+                <strong>{step.name}</strong>
+                <span>{step.text}</span>
+              </li>
+            ))}
+          </ol>
+          <a href={editorHref} class="k-btn k-btn-ghost">Try it now →</a>
+        </section>
+      )
+    }
+
+    {
+      content?.tips && content.tips.length > 0 && (
+        <section class="tool__section">
+          <h2>Tips</h2>
+          <ul class="tool__tips k-prose">
+            {content.tips.map((tip) => (
+              <li>{tip}</li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    <section class="tool__section tool__privacy k-card">
+      <h2>Why it’s private</h2>
+      <p>
+        Unlike most “online” editors, Klipzo never uploads your {tool.kind}. Everything —
+        decoding, editing, and export — happens on your own device inside the browser. There’s
+        no server that receives your file, no account, and no watermark on what you export.
+        <a href="/how-it-works">See exactly how it works →</a>
+      </p>
+    </section>
+
+    <AdSlot minHeight={280} label="Advertisement" />
+
+    <FaqAccordion items={faqs} />
+
+    {
+      related.length > 0 && (
+        <section class="tool__section">
+          <h2>Related tools</h2>
+          <div class="tool__related">
+            {related.map((t) => (
+              <ToolCard tool={t} />
+            ))}
+          </div>
+        </section>
+      )
+    }
+  </article>
+</ContentLayout>
+
+<style>
+  .tool {
+    max-width: 52rem;
+    margin-inline: auto;
+  }
+  .tool__hero {
+    padding-block: 1rem 1.5rem;
+  }
+  .tool__eyebrow {
+    font-size: 0.82rem;
+    color: var(--color-fg-muted);
+    margin-bottom: 0.75rem;
+  }
+  .tool__hero h1 {
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight: 720;
+    line-height: 1.1;
+  }
+  .tool__intro {
+    margin-top: 0.9rem;
+    font-size: 1.12rem;
+    color: var(--color-fg-muted);
+    line-height: 1.65;
+  }
+  .tool__cta {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .tool__ctabtn {
+    padding: 0.7rem 1.3rem;
+    font-size: 1rem;
+  }
+  .tool__ctanote {
+    font-size: 0.82rem;
+    color: var(--color-fg-subtle);
+  }
+  .tool__body {
+    margin-top: 0.5rem;
+  }
+  .tool__section {
+    margin-top: 2.5rem;
+  }
+  .tool__section h2 {
+    font-size: 1.5rem;
+    font-weight: 650;
+    margin-bottom: 1rem;
+  }
+  .tool__steps {
+    display: grid;
+    gap: 0.85rem;
+    counter-reset: step;
+    margin-bottom: 1.25rem;
+  }
+  .tool__steps li {
+    display: grid;
+    gap: 0.2rem;
+    padding-left: 2.6rem;
+    position: relative;
+    line-height: 1.55;
+  }
+  .tool__steps li::before {
+    counter-increment: step;
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1.85rem;
+    height: 1.85rem;
+    display: grid;
+    place-items: center;
+    background: var(--color-accent);
+    color: var(--color-accent-contrast);
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 620;
+  }
+  .tool__steps strong {
+    color: var(--color-fg);
+  }
+  .tool__steps span {
+    color: var(--color-fg-muted);
+  }
+  .tool__privacy {
+    padding: 1.4rem;
+    line-height: 1.65;
+  }
+  .tool__privacy p {
+    color: var(--color-fg-muted);
+  }
+  .tool__related {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+    gap: 0.75rem;
+  }
+</style>

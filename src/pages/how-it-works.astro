@@ -1,0 +1,137 @@
+---
+import ContentLayout from "../layouts/ContentLayout.astro";
+import FaqAccordion from "../components/FaqAccordion.astro";
+import {
+  breadcrumbSchema,
+  organizationSchema,
+  webApplicationSchema,
+  faqSchema,
+  type Crumb,
+  type FaqItem,
+} from "../lib/seo";
+
+const crumbs: Crumb[] = [
+  { name: "Home", path: "/" },
+  { name: "How it works", path: "/how-it-works" },
+];
+
+const faqs: FaqItem[] = [
+  {
+    question: "How can Klipzo edit my video without uploading it?",
+    answer:
+      "Modern browsers can decode, process, and encode media directly on your device using WebCodecs, WebGL, and WebAssembly. Klipzo uses those APIs, so your file is opened from your disk into your browser’s memory and never sent over the network.",
+  },
+  {
+    question: "How do I know nothing is being uploaded?",
+    answer:
+      "You can verify it yourself: open your browser’s developer tools, go to the Network tab, and edit and export a file. You’ll see no upload of your media. The app is static — there is no server endpoint that receives files.",
+  },
+  {
+    question: "Where are my files stored while I work?",
+    answer:
+      "In your browser’s memory, and for large files in the Origin Private File System (OPFS) — a private, on-device scratch area. It never syncs anywhere. You can wipe it any time with the ‘Clear session’ button, and Klipzo also clears it when you close the tab.",
+  },
+  {
+    question: "Do you keep any copy of my photos or videos?",
+    answer:
+      "No. There is no account and no server storage of your media. We literally cannot see your files — they never leave your device.",
+  },
+];
+
+const schema = [
+  organizationSchema(),
+  webApplicationSchema({ url: "/how-it-works" }),
+  breadcrumbSchema(crumbs),
+  faqSchema(faqs),
+];
+---
+
+<ContentLayout
+  title="How Klipzo works — private, on-device editing explained"
+  description="Klipzo edits your photos and video entirely in your browser. Nothing is uploaded, there’s no account, and files are cleared when you’re done. Here’s exactly how."
+  canonical="/how-it-works"
+  crumbs={crumbs}
+  schema={schema}
+  narrow
+>
+  <article class="k-prose">
+    <h1>How Klipzo works</h1>
+    <p>
+      <strong>Klipzo runs entirely in your browser.</strong> When you open a photo or video, the
+      file is read from your device into your browser’s memory and edited there. It is never
+      uploaded to a server, never sent to us, and never shared with a third party. There is no
+      account, and everything is cleared when your session ends. This isn’t a promise we ask you to
+      take on faith — it’s how the app is built, and you can verify it.
+    </p>
+
+    <h2>The short version</h2>
+    <ul>
+      <li><strong>Nothing is uploaded.</strong> Your media stays on your device from open to export.</li>
+      <li><strong>No account, ever.</strong> No sign-up, no email, no login, no user database.</li>
+      <li><strong>Session-only.</strong> Your work lives for the current session and is clearable at any time.</li>
+      <li><strong>Completely free.</strong> No paywalls, no feature gates, no watermarks on exports.</li>
+    </ul>
+
+    <h2>Why a browser can do this now</h2>
+    <p>
+      For years, “online” editors worked by uploading your file to a server, processing it there,
+      and sending it back. That’s slow, and it means a company holds a copy of your media. Klipzo
+      takes a different path made possible by modern browser technology:
+    </p>
+    <ul>
+      <li>
+        <strong>Canvas &amp; WebGL</strong> render and adjust images on your device’s GPU — the
+        brightness, contrast, filters, crop, and text all happen locally.
+      </li>
+      <li>
+        <strong>WebCodecs</strong> gives the browser hardware-accelerated video decoding and
+        encoding, so trimming and converting video happens on your machine.
+      </li>
+      <li>
+        <strong>WebAssembly</strong> provides a fast, universal fallback for formats and operations
+        the native APIs don’t cover — still fully on-device.
+      </li>
+      <li>
+        <strong>OPFS (Origin Private File System)</strong> is a private, on-device scratch space so
+        even large files can be handled smoothly and survive an accidental refresh — without ever
+        leaving your computer.
+      </li>
+    </ul>
+
+    <h2>What happens to your files</h2>
+    <p>
+      When you import a file, Klipzo reads it locally and keeps your working project in memory (and
+      in on-device OPFS scratch for large media). When you export, the result is encoded on your
+      device and offered to you as a normal download. At no point does your media travel over the
+      network. When you click <strong>Clear session</strong> — or simply close the tab — the scratch
+      storage is wiped.
+    </p>
+
+    <h2>Verify it yourself</h2>
+    <p>
+      You don’t have to trust us. Open your browser’s developer tools (right-click →
+      Inspect → Network), then import, edit, and export a file. You’ll see Klipzo load its own code,
+      but <em>no upload of your photo or video</em>. That transparency is the whole point.
+    </p>
+
+    <h2>What we do collect</h2>
+    <p>
+      To keep the lights on, Klipzo shows ads on its guide and landing pages and measures anonymous
+      usage (for example, that an export happened) so we know which tools people use. We never send
+      your file names, file contents, thumbnails, or anything derived from your media to analytics or
+      anywhere else. Full detail is in our <a href="/privacy-policy">Privacy Policy</a>.
+    </p>
+
+    <p class="k-cta-line">
+      <a href="/editor" class="k-btn k-btn-primary">Open the editor →</a>
+    </p>
+  </article>
+
+  <FaqAccordion items={faqs} />
+</ContentLayout>
+
+<style>
+  .k-cta-line {
+    margin-top: 2rem;
+  }
+</style>

@@ -1,0 +1,104 @@
+---
+import ContentLayout from "../../layouts/ContentLayout.astro";
+import { getCollection } from "astro:content";
+import { formatDate } from "../../i18n/format";
+import { breadcrumbSchema, organizationSchema, websiteSchema, type Crumb } from "../../lib/seo";
+
+const guides = (await getCollection("guides", ({ data }) => !data.draft)).sort(
+  (a, b) => +new Date(b.data.datePublished) - +new Date(a.data.datePublished),
+);
+
+const crumbs: Crumb[] = [
+  { name: "Home", path: "/" },
+  { name: "Guides", path: "/guides" },
+];
+const schema = [organizationSchema(), websiteSchema(), breadcrumbSchema(crumbs)];
+---
+
+<ContentLayout
+  title="Guides — Free, private photo & video editing"
+  description="Step-by-step, no-nonsense guides to editing photos and video for free in your browser — without uploading your files or signing up."
+  canonical="/guides"
+  crumbs={crumbs}
+  schema={schema}
+>
+  <header class="guides-hero">
+    <h1>Guides &amp; tutorials</h1>
+    <p>
+      Practical, honest how-tos for editing photos and video entirely in your browser — free, no
+      account, and nothing uploaded.
+    </p>
+  </header>
+
+  {
+    guides.length === 0 ? (
+      <p class="guides-empty">Guides are on the way.</p>
+    ) : (
+      <ul class="guides-list">
+        {guides.map((guide) => (
+          <li class="guides-item k-card">
+            <a href={`/guides/${guide.id}`}>
+              <span class="guides-item__cat">{guide.data.category}</span>
+              <h2>{guide.data.title}</h2>
+              <p>{guide.data.excerpt ?? guide.data.description}</p>
+              <span class="guides-item__date">{formatDate(guide.data.datePublished)}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</ContentLayout>
+
+<style>
+  .guides-hero {
+    padding-block: 1rem 1.5rem;
+    max-width: 44rem;
+  }
+  .guides-hero h1 {
+    font-size: clamp(1.9rem, 4vw, 2.6rem);
+    font-weight: 720;
+  }
+  .guides-hero p {
+    margin-top: 0.75rem;
+    color: var(--color-fg-muted);
+    font-size: 1.05rem;
+    line-height: 1.6;
+  }
+  .guides-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  .guides-item a {
+    display: grid;
+    gap: 0.4rem;
+    padding: 1.3rem;
+    height: 100%;
+  }
+  .guides-item__cat {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+  .guides-item h2 {
+    font-size: 1.15rem;
+    font-weight: 640;
+    color: var(--color-fg);
+  }
+  .guides-item p {
+    color: var(--color-fg-muted);
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
+  .guides-item__date {
+    font-size: 0.78rem;
+    color: var(--color-fg-subtle);
+  }
+  .guides-item:hover {
+    border-color: var(--color-accent);
+  }
+</style>

@@ -1,0 +1,62 @@
+---
+import ContentLayout from "../layouts/ContentLayout.astro";
+import { SITE, ORG, isConfigured } from "../config/site";
+import { breadcrumbSchema, organizationSchema, type Crumb } from "../lib/seo";
+
+const crumbs: Crumb[] = [
+  { name: "Home", path: "/" },
+  { name: "Contact", path: "/contact" },
+];
+const email = isConfigured(ORG.contactEmail) ? ORG.contactEmail : null;
+const org = isConfigured(ORG.legalName) ? ORG.legalName : SITE.brand;
+---
+
+<ContentLayout
+  title="Contact Klipzo"
+  description="Questions, feedback, bug reports, or privacy requests? Here’s how to reach the Klipzo team."
+  canonical="/contact"
+  crumbs={crumbs}
+  schema={[organizationSchema(), breadcrumbSchema(crumbs)]}
+  narrow
+>
+  <article class="k-prose">
+    <h1>Contact us</h1>
+    <p>
+      We’d genuinely like to hear from you — whether it’s a bug, a feature request, a correction to a
+      guide, or a privacy question. Klipzo is built by a small team, and real feedback shapes what we
+      build next.
+    </p>
+
+    <h2>Email</h2>
+    {
+      email ? (
+        <p>
+          The best way to reach us is by email at <a href={`mailto:${email}`}>{email}</a>. We read
+          every message and aim to reply within a few business days.
+        </p>
+      ) : (
+        <p>
+          Our monitored contact email address will be published here. In the meantime, see the notes
+          below on what to include in your message.
+        </p>
+      )
+    }
+
+    <h2>What to include</h2>
+    <ul>
+      <li><strong>Bug reports:</strong> what you were doing, your browser and operating system, and what happened. Please don’t send us your media — we can’t receive files, and we don’t need them to help.</li>
+      <li><strong>Feature requests:</strong> the task you’re trying to accomplish; that helps us design the right thing.</li>
+      <li><strong>Corrections:</strong> the page URL and what’s wrong.</li>
+      <li><strong>Privacy requests:</strong> what you’d like us to do; see our <a href="/privacy-policy">Privacy Policy</a> for your rights.</li>
+    </ul>
+
+    <h2>A note on your files</h2>
+    <p>
+      Please remember that Klipzo never receives your photos or videos — and there’s no need to send
+      them to us either. Please don’t email us your files. If you’re troubleshooting, a screenshot of
+      the error (with any sensitive content removed) is far more useful than the media itself.
+    </p>
+
+    <p>Operated by {org}.</p>
+  </article>
+</ContentLayout>

@@ -1,0 +1,89 @@
+---
+import ContentLayout from "../layouts/ContentLayout.astro";
+import { SITE, ORG, isConfigured } from "../config/site";
+import { formatDate } from "../i18n/format";
+import { breadcrumbSchema, organizationSchema, type Crumb } from "../lib/seo";
+
+const crumbs: Crumb[] = [
+  { name: "Home", path: "/" },
+  { name: "Terms", path: "/terms" },
+];
+const updated = formatDate(new Date("2026-07-05"));
+const org = isConfigured(ORG.legalName) ? ORG.legalName : SITE.brand;
+---
+
+<ContentLayout
+  title="Terms of Use"
+  description="The simple terms for using Klipzo, a free in-browser photo and video editor provided as-is with no account required."
+  canonical="/terms"
+  crumbs={crumbs}
+  schema={[organizationSchema(), breadcrumbSchema(crumbs)]}
+  narrow
+>
+  <article class="k-prose">
+    <h1>Terms of Use</h1>
+    <p class="k-updated">Last updated: {updated}</p>
+
+    <p>
+      These terms govern your use of {SITE.domain} (“Klipzo”), operated by {org}. By using the site,
+      you agree to them. If you don’t agree, please don’t use the service.
+    </p>
+
+    <h2>1. The service</h2>
+    <p>
+      Klipzo is a free, browser-based photo and video editor. It runs on your device; we do not host,
+      receive, or store your media. No account is required.
+    </p>
+
+    <h2>2. Your content is yours</h2>
+    <p>
+      You retain all rights to the files you edit. Because your media never leaves your device, we
+      claim no license to it and never access it. You are responsible for having the right to edit
+      the files you use, and for how you use the output.
+    </p>
+
+    <h2>3. Acceptable use</h2>
+    <p>You agree not to use Klipzo to:</p>
+    <ul>
+      <li>create or process content that is illegal, or that infringes others’ rights;</li>
+      <li>attempt to disrupt, reverse the hosting of, or misuse the website; or</li>
+      <li>represent the tool or its output in a way that violates applicable law.</li>
+    </ul>
+
+    <h2>4. Free, with no warranty</h2>
+    <p>
+      Klipzo is provided free of charge and “as is”, without warranties of any kind. We don’t
+      guarantee that every feature works in every browser, that exports will always succeed, or that
+      the service will be uninterrupted. See our <a href="/disclaimer">Disclaimer</a> for detail.
+    </p>
+
+    <h2>5. Limitation of liability</h2>
+    <p>
+      To the maximum extent permitted by law, {org} is not liable for any indirect, incidental, or
+      consequential damages, or for any loss of data or content, arising from your use of Klipzo.
+      Because your files stay on your device, keeping your own backups is your responsibility.
+    </p>
+
+    <h2>6. Third-party services</h2>
+    <p>
+      Our website pages include advertising and analytics provided by Google, governed by their own
+      terms and our <a href="/privacy-policy">Privacy Policy</a>.
+    </p>
+
+    <h2>7. Changes</h2>
+    <p>
+      We may update these terms; the “Last updated” date reflects the current version. Continued use
+      after changes means you accept them.
+    </p>
+
+    <h2>8. Contact</h2>
+    <p>Questions? Reach us via our <a href="/contact">Contact page</a>.</p>
+  </article>
+</ContentLayout>
+
+<style>
+  .k-updated {
+    color: var(--color-fg-subtle);
+    font-size: 0.85rem;
+  }
+</style>

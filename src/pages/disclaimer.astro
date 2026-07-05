@@ -1,0 +1,76 @@
+---
+import ContentLayout from "../layouts/ContentLayout.astro";
+import { SITE } from "../config/site";
+import { formatDate } from "../i18n/format";
+import { breadcrumbSchema, organizationSchema, type Crumb } from "../lib/seo";
+
+const crumbs: Crumb[] = [
+  { name: "Home", path: "/" },
+  { name: "Disclaimer", path: "/disclaimer" },
+];
+const updated = formatDate(new Date("2026-07-05"));
+---
+
+<ContentLayout
+  title="Disclaimer"
+  description="Klipzo is provided as-is. Keep your own backups; browser-based media processing has limits, and results can vary by browser and device."
+  canonical="/disclaimer"
+  crumbs={crumbs}
+  schema={[organizationSchema(), breadcrumbSchema(crumbs)]}
+  narrow
+>
+  <article class="k-prose">
+    <h1>Disclaimer</h1>
+    <p class="k-updated">Last updated: {updated}</p>
+
+    <p>
+      Klipzo is offered as a free, best-effort tool and is provided “as is”, without warranty of any
+      kind, express or implied. Please read the following before relying on it for important work.
+    </p>
+
+    <h2>Results can vary by browser and device</h2>
+    <p>
+      Klipzo relies on browser capabilities (Canvas, WebGL, WebCodecs, WebAssembly, OPFS) that differ
+      across browsers, operating systems, and hardware. Some exports — particularly heavy video —
+      work best on desktop Chrome or Edge, and certain codecs may not be available on your device. The
+      app detects capabilities and falls back where it can, but we can’t guarantee every operation
+      succeeds everywhere.
+    </p>
+
+    <h2>Keep your own backups</h2>
+    <p>
+      Because {SITE.brand} runs entirely on your device and stores nothing on our servers, your work
+      exists only in your current session until you export it. Always keep your original files and
+      save your exports. We are not responsible for lost or unsaved work, including work lost to a
+      crash, a closed tab, or clearing your session.
+    </p>
+
+    <h2>No professional advice</h2>
+    <p>
+      Our guides are for general informational purposes. They describe how to use the tool and common
+      editing techniques; they are not legal, professional, or licensing advice about how you may use
+      any particular image, video, audio, or font.
+    </p>
+
+    <h2>Your responsibility for content</h2>
+    <p>
+      You are responsible for ensuring you have the rights to edit and use the files you process with
+      Klipzo, and for complying with the terms of any platform where you publish the results.
+    </p>
+
+    <h2>Third-party links and ads</h2>
+    <p>
+      Our pages may link to third-party sites and display third-party ads. We don’t control and aren’t
+      responsible for their content or practices.
+    </p>
+
+    <p>See also our <a href="/terms">Terms of Use</a> and <a href="/privacy-policy">Privacy Policy</a>.</p>
+  </article>
+</ContentLayout>
+
+<style>
+  .k-updated {
+    color: var(--color-fg-subtle);
+    font-size: 0.85rem;
+  }
+</style>

@@ -1,0 +1,85 @@
+---
+import ContentLayout from "../layouts/ContentLayout.astro";
+import { SITE, ORG, AUTHOR, isConfigured } from "../config/site";
+import {
+  breadcrumbSchema,
+  organizationSchema,
+  personSchema,
+  type Crumb,
+} from "../lib/seo";
+
+const crumbs: Crumb[] = [
+  { name: "Home", path: "/" },
+  { name: "About", path: "/about" },
+];
+const authorName = isConfigured(AUTHOR.name) ? AUTHOR.name : "the Klipzo team";
+const authorBio = isConfigured(AUTHOR.bioShort) ? AUTHOR.bioShort : null;
+const authorCred = isConfigured(AUTHOR.credentials) ? AUTHOR.credentials : null;
+const org = isConfigured(ORG.legalName) ? ORG.legalName : SITE.brand;
+---
+
+<ContentLayout
+  title="About Klipzo"
+  description="Klipzo is a free, privacy-first photo and video editor that runs entirely in your browser. Here’s who builds it and why."
+  canonical="/about"
+  crumbs={crumbs}
+  schema={[organizationSchema(), personSchema(), breadcrumbSchema(crumbs)]}
+  narrow
+>
+  <article class="k-prose">
+    <h1>About Klipzo</h1>
+    <p>
+      Klipzo is a free photo and video editor that runs entirely in your browser. It exists for a
+      simple reason: editing your own photos and video shouldn’t require handing them to a company’s
+      servers, creating an account, or paying to remove a watermark. Everything in Klipzo happens on
+      your device — nothing is uploaded, and nothing is stored by us.
+    </p>
+
+    <h2>Why we built it</h2>
+    <p>
+      Most “online” editors upload your files to process them. That’s slower than it needs to be, and
+      it means your personal photos and videos sit on someone else’s computer. Modern browsers are
+      now powerful enough to do the whole job locally — real-time image adjustments on the GPU,
+      hardware-accelerated video encoding, and private on-device storage for large files. Klipzo is
+      built around that shift: a capable editor you’d actually choose over desktop software because
+      it’s instant and private.
+    </p>
+
+    <h2>Who’s behind it</h2>
+    {
+      authorBio ? (
+        <p>
+          Klipzo’s tools and guides are created by <strong>{authorName}</strong>
+          {authorCred && <> — {authorCred}</>}. {authorBio}
+        </p>
+      ) : (
+        <p>
+          Klipzo is built and maintained by a small team with a background in photo and video
+          editing and web media. Our guides are written by people who actually edit for a living, and
+          every how-to is something we’ve done ourselves in the tool.
+        </p>
+      )
+    }
+
+    <h2>How we make money</h2>
+    <p>
+      Klipzo is free and always will be — no paywalls, no “pro” tier, no watermarks on your exports.
+      We cover costs with ads on our guide and landing pages, never inside the editing canvas and
+      never at the expense of your privacy. You can read exactly what we collect (and what we don’t)
+      in our <a href="/privacy-policy">Privacy Policy</a>.
+    </p>
+
+    <h2>Our commitments</h2>
+    <ul>
+      <li>Your files never leave your device.</li>
+      <li>No account, no sign-up, no tracking of your media.</li>
+      <li>Free, with no watermarks and no export limits.</li>
+      <li>Honest about browser limitations — if something isn’t supported, we say so.</li>
+    </ul>
+
+    <p>
+      Have feedback or found a bug? We’d genuinely like to hear it — see our
+      <a href="/contact">Contact page</a>. Legal entity: {org}.
+    </p>
+  </article>
+</ContentLayout>

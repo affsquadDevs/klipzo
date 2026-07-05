@@ -1,0 +1,149 @@
+---
+/**
+ * Tutorial/guide layout (§6.2, §8): answer-first article with author byline, published/
+ * updated dates, FAQ, internal links into the editor, and Article + FAQPage JSON-LD.
+ */
+import ContentLayout from "./ContentLayout.astro";
+import FaqAccordion from "../components/FaqAccordion.astro";
+import AuthorByline from "../components/AuthorByline.astro";
+import AdSlot from "../components/monetization/AdSlot.astro";
+import ToolCard from "../components/ToolCard.astro";
+import { getTool, type Tool } from "../lib/tools";
+import { formatDate } from "../i18n/format";
+import {
+  articleSchema,
+  faqSchema,
+  breadcrumbSchema,
+  organizationSchema,
+  personSchema,
+  type Crumb,
+  type FaqItem,
+} from "../lib/seo";
+
+interface Props {
+  title: string;
+  description: string;
+  slug: string;
+  datePublished: string;
+  dateModified?: string;
+  category: string;
+  faqs?: FaqItem[];
+  relatedTools?: string[];
+}
+
+const { title, description, slug, datePublished, dateModified, category, faqs, relatedTools } =
+  Astro.props;
+
+const crumbs: Crumb[] = [
+  { name: "Home", path: "/" },
+  { name: "Guides", path: "/guides" },
+  { name: title, path: `/guides/${slug}` },
+];
+
+const related = (relatedTools ?? [])
+  .map((s) => getTool(s))
+  .filter((t): t is Tool => Boolean(t));
+
+const schema = [
+  organizationSchema(),
+  personSchema(),
+  breadcrumbSchema(crumbs),
+  articleSchema({
+    headline: title,
+    description,
+    url: `/guides/${slug}`,
+    datePublished,
+    dateModified,
+  }),
+  faqs && faqs.length ? faqSchema(faqs) : undefined,
+];
+---
+
+<ContentLayout
+  title={title}
+  description={description}
+  canonical={`/guides/${slug}`}
+  ogType="article"
+  crumbs={crumbs}
+  schema={schema}
+  narrow
+>
+  <article class="guide">
+    <p class="guide__category">{category}</p>
+    <h1>{title}</h1>
+    <div class="guide__meta">
+      <AuthorByline />
+      <span class="guide__dates">
+        Published {formatDate(datePublished)}
+        {dateModified && dateModified !== datePublished && <> · Updated {formatDate(dateModified)}</>}
+      </span>
+    </div>
+
+    <div class="guide__body k-prose">
+      <slot />
+    </div>
+
+    <AdSlot minHeight={280} />
+
+    {faqs && faqs.length > 0 && <FaqAccordion items={faqs} />}
+
+    {
+      related.length > 0 && (
+        <section class="guide__related">
+          <h2>Try these tools</h2>
+          <div class="guide__relatedgrid">
+            {related.map((t) => (
+              <ToolCard tool={t} />
+            ))}
+          </div>
+        </section>
+      )
+    }
+  </article>
+</ContentLayout>
+
+<style>
+  .guide__category {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+  .guide h1 {
+    font-size: clamp(1.9rem, 4vw, 2.7rem);
+    font-weight: 720;
+    line-height: 1.1;
+    margin-top: 0.4rem;
+  }
+  .guide__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .guide__dates {
+    font-size: 0.8rem;
+    color: var(--color-fg-subtle);
+  }
+  .guide__body {
+    margin-top: 1.5rem;
+  }
+  .guide__related {
+    margin-top: 2.5rem;
+  }
+  .guide__related h2 {
+    font-size: 1.4rem;
+    font-weight: 650;
+    margin-bottom: 1rem;
+  }
+  .guide__relatedgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+    gap: 0.75rem;
+  }
+</style>
