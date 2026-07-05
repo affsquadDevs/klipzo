@@ -62,6 +62,27 @@ The built-in banner is a compliant Consent Mode v2 signalling layer and a good d
 but it is **not** an IAB TCF-certified CMP on its own. Wire the certified CMP's
 grant/deny callbacks to the same `gtag('consent','update', …)` calls.
 
+## Known v1 scope & deferred (phase-2) work
+
+The build delivers all 7 phases. These items are intentionally deferred and worth
+tracking (the primary paths work and are verified in-browser):
+
+- **Video editor** ships the high-value single-clip operations: trim, reframe,
+  rotate, format-convert (MP4/WebM), GIF, WAV audio extract, frame capture — with
+  progress + cancel and capability detection. Deferred: multi-clip split/merge/reorder,
+  on-video text/logo overlays, speed control, add-audio-track, on-video filters, and
+  MP3 audio (WAV works everywhere; MP3 needs an encoder or the ffmpeg path).
+- **Fallback encoders**: the primary WebCodecs + Mediabunny path is implemented and
+  verified. MediaRecorder and single-threaded ffmpeg.wasm are *detected and messaged*
+  (honest "not supported — try desktop Chrome/Edge") but not yet executed as encode
+  fallbacks. Wire them if you need coverage for browsers without WebCodecs encode.
+- **Large-file warning UI**: `isLargeFile()` / `LARGE_FILE_BYTES` exist in
+  `src/editor/core/media.ts` but aren't yet surfaced as a pre-import confirm prompt.
+- **Background removal** (`/remove-background`) is a phase-2 on-device model (content
+  page ships; editor preset not yet implemented).
+- **Lighthouse**: run it on the deployed content pages to confirm the CWV budget
+  (the static architecture + bundle isolation are already verified via `npm run qa`).
+
 ## Pre-AdSense-application checklist (§7)
 
 AdSense rejects tool-only sites with little text. Apply **only after**:
