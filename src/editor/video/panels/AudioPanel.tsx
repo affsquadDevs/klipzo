@@ -128,7 +128,11 @@ export function AudioPanel({ canExtract, onExtractAudio, timelineDuration }: Pro
                           onChange={(e) => patchMusic(m.id, { fadeOut: Math.max(0, Number(e.target.value) || 0) })} />
                       </label>
                     </div>
-                    <p className="vt-readout">Source: {formatDuration(m.duration)} · plays {formatDuration(m.out - m.in)} (clipped to video length)</p>
+                    <p className="vt-readout">
+                      Source: {formatDuration(m.duration)} · plays{" "}
+                      {formatDuration(Math.max(0, Math.min(m.out - m.in, timelineDuration - m.start)))}
+                      {m.out - m.in > timelineDuration - m.start ? " (clipped to video length)" : ""}
+                    </p>
                   </div>
                 )}
               </div>
