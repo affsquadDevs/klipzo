@@ -166,8 +166,21 @@
   padding: 0.75rem;
   background: var(--color-surface);
   border-top: 1px solid var(--color-border);
+}
+/* Horizontal scroll viewport — clips are laid out on a fixed px/sec scale, so a
+   long timeline scrolls rather than being crushed to fit. */
+.mt-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px; /* room for the scrollbar without clipping the music lane */
+  overscroll-behavior-x: contain;
+}
+/* Scaled inner surface holding all three lanes so they stay pixel-aligned and
+   scroll together. Width is set inline from duration × px/sec. */
+.mt-lanes {
   display: grid;
   gap: 0.4rem;
+  min-width: 100%;
 }
 .mt-track {
   position: relative;
@@ -177,7 +190,7 @@
   border: 1px solid var(--color-border);
   touch-action: none;
   cursor: pointer;
-  overflow: hidden;
+  overflow: visible; /* handles sit flush inside; the scroll viewport does the clipping */
 }
 .mt-clip {
   position: absolute;
@@ -190,7 +203,7 @@
   display: flex;
   align-items: center;
   padding-inline: 0.5rem;
-  min-width: 0;
+  min-width: 10px; /* keep tiny/heavily-trimmed clips grabbable */
 }
 .mt-clip.is-selected {
   border-color: var(--color-accent);
@@ -224,10 +237,10 @@
   z-index: 4;
 }
 .mt-handle--in {
-  left: -6px;
+  left: 0; /* flush inside the clip's left edge so the scroll viewport can't clip it */
 }
 .mt-handle--out {
-  right: -6px;
+  right: 0;
 }
 .mt-handle::after {
   content: "";
@@ -241,11 +254,10 @@
 }
 .mt-junction {
   position: absolute;
-  right: -11px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 22px;
-  height: 22px;
+  right: -10px;
+  top: 3px; /* top-right corner so it doesn't blanket the full-height tail-trim out-handle */
+  width: 20px;
+  height: 20px;
   border-radius: 999px;
   border: 1px solid var(--color-border);
   background: var(--color-surface);

@@ -1,12 +1,18 @@
 /**
- * Multi-clip timeline strip (Phase A): clip blocks laid out via computeSegments
- * (crossfades visibly overlap), playhead scrub, click-to-select, per-clip trim
- * edge handles, junction transition chips, and a text-overlay lane beneath.
+ * Multi-clip timeline strip (Phase A): clip blocks laid out on a FIXED
+ * pixels-per-second scale (so trimming a clip visibly changes its width and the
+ * grabbed edge tracks the cursor — a percentage-of-duration layout froze single
+ * clips at 100% and made edge-drag trimming impossible). The lanes share one
+ * horizontally-scrollable inner surface so the track, text lane and music lane
+ * stay pixel-aligned. The scale auto-fits when the clip *set* changes but holds
+ * steady during a trim gesture.
  *
  * Pointer rules learned from adversarial QA: handles stopPropagation so the
- * scrub handler can't steal the drag, and setPointerCapture is try/caught.
+ * scrub handler can't steal the drag, and setPointerCapture is try/caught. Trim
+ * uses a delta-from-grab model (origin clientX + in/out captured on pointerdown)
+ * so it never accumulates per-frame drift and survives min-length clamping.
  */
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   computeSegments,
   effectiveTransition,
@@ -29,12 +35,27 @@ interface Props {
   onSeek: (t: number) => void;
 }
 
+// Time scale bounds. The scale is auto-fit to the viewport when the clip set
+// changes, then held fixed during trims so edges visibly move.
+const MIN_PPS = 6; // very long timelines: keep clips grabbable without huge widths
+const MAX_PPS = 220; // very short clips: don't blow a 1s clip up to the whole viewport
+const FALLBACK_PPS = 80; // before the viewport width is measured
+const EDGE_PAD = 24; // px of breathing room so the out-handle isn't flush to the edge
+
 export function MultiTimeline({ project, current, onSeek }: Props) {
-  const trackRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null); // scroll viewport (measured for fit)
+  const lanesRef = useRef<HTMLDivElement>(null); // scaled inner surface (measured for time)
   const dragRef = useRef<
     | null
     | { kind: "scrub" }
-    | { kind: "trim-in" | "trim-out"; clipIndex: number }
+    | {
+        kind: "trim-in" | "trim-out";
+        clipIndex: number;
+        startClientX: number;
+        startIn: number;
+        startOut: number;
+        speed: number;
+      }
     | { kind: "text-move"; textId: string; grabOffset: number }
     | { kind: "music-move"; musicId: string; grabOffset: number }
   >(null);
@@ -55,14 +76,52 @@ export function MultiTimeline({ project, current, onSeek }: Props) {
   const duration = Math.max(0.001, totalDuration(project.clips));
   const segments = computeSegments(project.clips);
 
+  // Measure the scroll viewport so the fit scale tracks resizes.
+  const [viewportW, setViewportW] = useState(0);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver((entries) => {
+      setViewportW(entries[0]?.contentRect.width ?? 0);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // Auto-fit the scale to the viewport whenever the clip *set* changes (import /
+  // delete / reorder / load) or the viewport resizes — but NOT on trim, so the
+  // scale is stable while dragging and the clip width actually reflects the trim.
+  const clipIdsKey = project.clips.map((c) => c.id).join("|");
+  const [pxPerSec, setPxPerSec] = useState(FALLBACK_PPS);
+  useEffect(() => {
+    if (viewportW <= 0) return;
+    const dur = totalDuration(project.clips);
+    const fit = dur > 0.01 ? (viewportW - EDGE_PAD) / dur : FALLBACK_PPS;
+    setPxPerSec(Math.min(MAX_PPS, Math.max(MIN_PPS, fit)));
+    // Intentionally keyed on the clip *identity set* + viewport, not durations,
+    // so trimming (which changes duration) never re-fits and re-freezes edges.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clipIdsKey, viewportW]);
+
+  // While trimming a clip's head, the gapless layout pins its start, so the
+  // grabbed left edge wouldn't follow the cursor. During the drag we hold the
+  // clip's right edge fixed and let its left edge (and everything downstream)
+  // ride out to the right by the trimmed amount; on release it snaps back to the
+  // gapless layout (standard magnetic-timeline feel). View-only, never persisted.
+  const [trimInView, setTrimInView] = useState<{ fromIndex: number; sec: number } | null>(null);
+  const laneOffset = (index: number) =>
+    trimInView && index >= trimInView.fromIndex ? trimInView.sec : 0;
+
+  const contentWidth = (duration + (trimInView?.sec ?? 0)) * pxPerSec;
+  const px = (t: number) => `${t * pxPerSec}px`;
+
   function timeFromClientX(clientX: number): number {
-    const el = trackRef.current;
+    const el = lanesRef.current;
     if (!el) return 0;
-    const rect = el.getBoundingClientRect();
-    const frac = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
-    return frac * duration;
+    const rect = el.getBoundingClientRect(); // rect.left already accounts for scrollLeft
+    const t = (clientX - rect.left) / pxPerSec;
+    return Math.min(duration, Math.max(0, t));
   }
-  const pct = (t: number) => `${(t / duration) * 100}%`;
 
   function capture(e: React.PointerEvent) {
     try {
@@ -82,27 +141,29 @@ export function MultiTimeline({ project, current, onSeek }: Props) {
     const drag = dragRef.current;
     if (!drag) return;
     e.stopPropagation();
-    const t = timeFromClientX(e.clientX);
 
     if (drag.kind === "scrub") {
-      onSeek(t);
+      onSeek(timeFromClientX(e.clientX));
       return;
     }
     if (drag.kind === "trim-in" || drag.kind === "trim-out") {
-      const seg = segments[drag.clipIndex];
-      if (!seg) return;
-      // Convert the timeline position under the cursor to a source time delta.
-      const clip = seg.clip;
+      // Delta from the grab point, converted from timeline px to source seconds
+      // (speed-aware: a sped-up clip trims more source per pixel).
+      const deltaSource = ((e.clientX - drag.startClientX) / pxPerSec) * drag.speed;
       if (drag.kind === "trim-in") {
-        const newIn = clip.in + (t - seg.start);
-        trimClip(drag.clipIndex, newIn, clip.out, false);
+        trimClip(drag.clipIndex, drag.startIn + deltaSource, drag.startOut, false);
+        // Offset the visual layout by the *actually applied* head trim (post-clamp)
+        // so the left handle stays under the cursor and stops when the clip bottoms out.
+        const applied = useTimeline.getState().project.clips[drag.clipIndex];
+        const sec = applied ? Math.max(0, (applied.in - drag.startIn) / drag.speed) : 0;
+        setTrimInView({ fromIndex: drag.clipIndex, sec });
       } else {
-        const newOut = clip.out + (t - seg.end);
-        trimClip(drag.clipIndex, clip.in, newOut, false);
+        trimClip(drag.clipIndex, drag.startIn, drag.startOut + deltaSource, false);
       }
       return;
     }
     if (drag.kind === "text-move") {
+      const t = timeFromClientX(e.clientX);
       const text = project.texts.find((x) => x.id === drag.textId);
       if (!text) return;
       const len = text.end - text.start;
@@ -110,6 +171,7 @@ export function MultiTimeline({ project, current, onSeek }: Props) {
       patchText(drag.textId, { start, end: start + len }, false);
     }
     if (drag.kind === "music-move") {
+      const t = timeFromClientX(e.clientX);
       const m = project.music.find((x) => x.id === drag.musicId);
       if (!m) return;
       const start = Math.max(0, Math.min(t - drag.grabOffset, duration));
@@ -122,158 +184,180 @@ export function MultiTimeline({ project, current, onSeek }: Props) {
     e.stopPropagation();
     if (dragRef.current.kind !== "scrub") endStroke();
     dragRef.current = null;
+    if (trimInView) setTrimInView(null); // snap back to the gapless layout
   }
 
   return (
     <div className="mt-wrap">
-      <div
-        ref={trackRef}
-        className="mt-track"
-        onPointerDown={onTrackPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-      >
-        {segments.map((seg) => {
-          const isSel = selectedClipIndex === seg.index;
-          const trans = effectiveTransition(project.clips, seg.index);
-          return (
-            <div
-              key={seg.clip.id}
-              className={`mt-clip ${isSel ? "is-selected" : ""}`}
-              style={{ left: pct(seg.start), width: pct(seg.end - seg.start), zIndex: isSel ? 3 : 1 }}
-              onPointerDown={(e) => {
-                e.stopPropagation();
-                capture(e);
-                selectClip(seg.index);
-                dragRef.current = { kind: "scrub" };
-                onSeek(timeFromClientX(e.clientX));
-              }}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-              title={`Clip ${seg.index + 1} · ${formatDuration(seg.end - seg.start)}`}
-            >
-              <span className="mt-clip__label">
-                {seg.index + 1} · {formatDuration(seg.end - seg.start)}
-              </span>
-              {(clipHasFX(seg.clip) || seg.clip.chroma.enabled) && (
-                <span className="mt-clip__fx" title="Has effects" aria-hidden>🎨</span>
-              )}
-
-              {isSel && (
-                <>
-                  <button
-                    className="mt-handle mt-handle--in"
-                    aria-label="Trim clip start"
-                    onPointerDown={(e) => {
-                      e.stopPropagation();
-                      capture(e);
-                      beginStroke();
-                      dragRef.current = { kind: "trim-in", clipIndex: seg.index };
-                    }}
-                    onPointerMove={onPointerMove}
-                    onPointerUp={onPointerUp}
-                  />
-                  <button
-                    className="mt-handle mt-handle--out"
-                    aria-label="Trim clip end"
-                    onPointerDown={(e) => {
-                      e.stopPropagation();
-                      capture(e);
-                      beginStroke();
-                      dragRef.current = { kind: "trim-out", clipIndex: seg.index };
-                    }}
-                    onPointerMove={onPointerMove}
-                    onPointerUp={onPointerUp}
-                  />
-                </>
-              )}
-
-              {seg.index < segments.length - 1 && (
-                <button
-                  className={`mt-junction ${trans.type !== "none" ? "is-active" : ""}`}
-                  title={
-                    trans.type === "none"
-                      ? "Add transition"
-                      : `${trans.type} · ${trans.duration.toFixed(1)}s (click to cycle)`
-                  }
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const order: Array<typeof trans.type> = ["none", "crossfade", "dip-to-black"];
-                    const cur = project.clips[seg.index]!.transitionAfter;
-                    const next = order[(order.indexOf(cur.type) + 1) % order.length]!;
-                    setClipTransition(seg.index, { type: next, duration: cur.duration || 0.5 });
-                  }}
-                >
-                  {trans.type === "none" ? "+" : trans.type === "crossfade" ? "⇄" : "●"}
-                </button>
-              )}
-            </div>
-          );
-        })}
-        <div className="mt-playhead" style={{ left: pct(Math.min(current, duration)) }} />
-      </div>
-
-      {/* Text overlay lane */}
-      <div className="mt-textlane">
-        {project.texts.map((text) => {
-          // Clamp to the visible timeline so an out-of-range end can't overflow.
-          const barStart = Math.max(0, Math.min(text.start, duration));
-          const barEnd = Math.max(barStart, Math.min(text.end, duration));
-          return (
-          <button
-            key={text.id}
-            className={`mt-textbar ${selectedTextId === text.id ? "is-selected" : ""}`}
-            style={{ left: pct(barStart), width: pct(Math.max(0.1, barEnd - barStart)) }}
-            title={`“${text.text.slice(0, 24)}” ${formatDuration(text.start)}–${formatDuration(text.end)} (drag to move)`}
-            onPointerDown={(e) => {
-              e.stopPropagation();
-              capture(e);
-              selectText(text.id);
-              beginStroke();
-              dragRef.current = {
-                kind: "text-move",
-                textId: text.id,
-                grabOffset: timeFromClientX(e.clientX) - text.start,
-              };
-            }}
+      <div className="mt-scroll" ref={scrollRef}>
+        <div
+          className="mt-lanes"
+          ref={lanesRef}
+          style={{ width: `${Math.max(contentWidth, viewportW || 0)}px` }}
+        >
+          <div
+            className="mt-track"
+            onPointerDown={onTrackPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
           >
-            T
-          </button>
-          );
-        })}
-      </div>
+            {segments.map((seg) => {
+              const isSel = selectedClipIndex === seg.index;
+              const trans = effectiveTransition(project.clips, seg.index);
+              return (
+                <div
+                  key={seg.clip.id}
+                  className={`mt-clip ${isSel ? "is-selected" : ""}`}
+                  style={{ left: px(seg.start + laneOffset(seg.index)), width: px(seg.end - seg.start), zIndex: isSel ? 3 : 1 }}
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    capture(e);
+                    selectClip(seg.index);
+                    dragRef.current = { kind: "scrub" };
+                    onSeek(timeFromClientX(e.clientX));
+                  }}
+                  onPointerMove={onPointerMove}
+                  onPointerUp={onPointerUp}
+                  title={`Clip ${seg.index + 1} · ${formatDuration(seg.end - seg.start)}`}
+                >
+                  <span className="mt-clip__label">
+                    {seg.index + 1} · {formatDuration(seg.end - seg.start)}
+                  </span>
+                  {(clipHasFX(seg.clip) || seg.clip.chroma.enabled) && (
+                    <span className="mt-clip__fx" title="Has effects" aria-hidden>🎨</span>
+                  )}
 
-      {/* Music / voiceover lane */}
-      {project.music.length > 0 && (
-        <div className="mt-musiclane">
-          {project.music.map((m) => {
-            const barStart = Math.max(0, Math.min(m.start, duration));
-            const len = Math.max(0.1, Math.min(m.out - m.in, duration - barStart));
-            return (
-              <button
-                key={m.id}
-                className={`mt-musicbar ${selectedMusicId === m.id ? "is-selected" : ""}`}
-                style={{ left: pct(barStart), width: pct(len) }}
-                title={`${m.name} (drag to move)`}
-                onPointerDown={(e) => {
-                  e.stopPropagation();
-                  capture(e);
-                  selectMusic(m.id);
-                  beginStroke();
-                  dragRef.current = { kind: "music-move", musicId: m.id, grabOffset: timeFromClientX(e.clientX) - m.start };
-                }}
-                onPointerMove={onPointerMove}
-                onPointerUp={onPointerUp}
-              >
-                {m.kind === "voiceover" ? "🎙" : "🎵"} {m.name.slice(0, 14)}
-              </button>
-            );
-          })}
+                  {isSel && (
+                    <>
+                      <button
+                        className="mt-handle mt-handle--in"
+                        aria-label="Trim clip start"
+                        onPointerDown={(e) => {
+                          e.stopPropagation();
+                          capture(e);
+                          beginStroke();
+                          dragRef.current = {
+                            kind: "trim-in",
+                            clipIndex: seg.index,
+                            startClientX: e.clientX,
+                            startIn: seg.clip.in,
+                            startOut: seg.clip.out,
+                            speed: seg.clip.speed,
+                          };
+                        }}
+                        onPointerMove={onPointerMove}
+                        onPointerUp={onPointerUp}
+                      />
+                      <button
+                        className="mt-handle mt-handle--out"
+                        aria-label="Trim clip end"
+                        onPointerDown={(e) => {
+                          e.stopPropagation();
+                          capture(e);
+                          beginStroke();
+                          dragRef.current = {
+                            kind: "trim-out",
+                            clipIndex: seg.index,
+                            startClientX: e.clientX,
+                            startIn: seg.clip.in,
+                            startOut: seg.clip.out,
+                            speed: seg.clip.speed,
+                          };
+                        }}
+                        onPointerMove={onPointerMove}
+                        onPointerUp={onPointerUp}
+                      />
+                    </>
+                  )}
+
+                  {seg.index < segments.length - 1 && (
+                    <button
+                      className={`mt-junction ${trans.type !== "none" ? "is-active" : ""}`}
+                      title={
+                        trans.type === "none"
+                          ? "Add transition"
+                          : `${trans.type} · ${trans.duration.toFixed(1)}s (click to cycle)`
+                      }
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const order: Array<typeof trans.type> = ["none", "crossfade", "dip-to-black"];
+                        const cur = project.clips[seg.index]!.transitionAfter;
+                        const next = order[(order.indexOf(cur.type) + 1) % order.length]!;
+                        setClipTransition(seg.index, { type: next, duration: cur.duration || 0.5 });
+                      }}
+                    >
+                      {trans.type === "none" ? "+" : trans.type === "crossfade" ? "⇄" : "●"}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+            <div className="mt-playhead" style={{ left: px(Math.min(current, duration)) }} />
+          </div>
+
+          {/* Text overlay lane */}
+          <div className="mt-textlane">
+            {project.texts.map((text) => {
+              // Clamp to the visible timeline so an out-of-range end can't overflow.
+              const barStart = Math.max(0, Math.min(text.start, duration));
+              const barEnd = Math.max(barStart, Math.min(text.end, duration));
+              return (
+                <button
+                  key={text.id}
+                  className={`mt-textbar ${selectedTextId === text.id ? "is-selected" : ""}`}
+                  style={{ left: px(barStart), width: px(Math.max(0.1, barEnd - barStart)) }}
+                  title={`“${text.text.slice(0, 24)}” ${formatDuration(text.start)}–${formatDuration(text.end)} (drag to move)`}
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    capture(e);
+                    selectText(text.id);
+                    beginStroke();
+                    dragRef.current = {
+                      kind: "text-move",
+                      textId: text.id,
+                      grabOffset: timeFromClientX(e.clientX) - text.start,
+                    };
+                  }}
+                  onPointerMove={onPointerMove}
+                  onPointerUp={onPointerUp}
+                >
+                  T
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Music / voiceover lane */}
+          {project.music.length > 0 && (
+            <div className="mt-musiclane">
+              {project.music.map((m) => {
+                const barStart = Math.max(0, Math.min(m.start, duration));
+                const len = Math.max(0.1, Math.min(m.out - m.in, duration - barStart));
+                return (
+                  <button
+                    key={m.id}
+                    className={`mt-musicbar ${selectedMusicId === m.id ? "is-selected" : ""}`}
+                    style={{ left: px(barStart), width: px(len) }}
+                    title={`${m.name} (drag to move)`}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      capture(e);
+                      selectMusic(m.id);
+                      beginStroke();
+                      dragRef.current = { kind: "music-move", musicId: m.id, grabOffset: timeFromClientX(e.clientX) - m.start };
+                    }}
+                    onPointerMove={onPointerMove}
+                    onPointerUp={onPointerUp}
+                  >
+                    {m.kind === "voiceover" ? "🎙" : "🎵"} {m.name.slice(0, 14)}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
