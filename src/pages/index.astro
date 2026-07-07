@@ -188,6 +188,10 @@ const schema = [
     z-index: 0;
     overflow: hidden;
     pointer-events: none;
+    /* Dissolve the decor (orbs/grid/chips) toward the bottom so it melts into the
+       next section instead of hard-clipping at the hero's edge. */
+    -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 92%);
+    mask-image: linear-gradient(to bottom, #000 55%, transparent 92%);
   }
   /* Faint dot grid, fading out toward the edges. */
   .k-hero__grid {
