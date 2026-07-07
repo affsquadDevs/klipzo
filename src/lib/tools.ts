@@ -42,6 +42,18 @@ export const PHOTO_TOOLS: Tool[] = [
     status: "v1",
   },
   {
+    slug: "circle-crop",
+    kind: "photo",
+    label: "Circle crop",
+    h1: "Circle crop: crop a photo to a circle, free",
+    title: "Circle Crop Online Free, Round Profile Pictures, No Upload",
+    description:
+      "Crop any photo into a circle in your browser and export a transparent PNG. Perfect for round profile pictures and avatars. No upload, no account, no watermark.",
+    editorPreset: "circle",
+    tagline: "Round avatars with transparent corners.",
+    status: "v1",
+  },
+  {
     slug: "resize-image",
     kind: "photo",
     label: "Resize image",

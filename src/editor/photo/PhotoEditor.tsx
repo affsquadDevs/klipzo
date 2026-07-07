@@ -45,6 +45,7 @@ function resolvePreset(): { tool: ToolId; autoExport: boolean; meme: boolean } {
   const key = raw.split(":")[0] ?? "";
   const map: Record<string, ToolId> = {
     crop: "crop",
+    circle: "crop",
     resize: "resize",
     rotate: "transform",
     text: "text",

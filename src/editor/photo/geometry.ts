@@ -38,6 +38,19 @@ export function cropSource(src: CanvasSource, rect: CropRect): HTMLCanvasElement
   return out;
 }
 
+/** Crop to `rect`, then keep only the inscribed ellipse — the corners become
+ *  transparent (a circle when the rect is square). Export as PNG/WebP to keep it. */
+export function cropCircle(src: CanvasSource, rect: CropRect): HTMLCanvasElement {
+  const out = cropSource(src, rect);
+  const ctx = out.getContext("2d")!;
+  ctx.globalCompositeOperation = "destination-in";
+  ctx.beginPath();
+  ctx.ellipse(out.width / 2, out.height / 2, out.width / 2, out.height / 2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalCompositeOperation = "source-over";
+  return out;
+}
+
 /** Orthogonal rotation by 90° steps (positive = clockwise). */
 export function rotateSource(src: CanvasSource, quarterTurns: number): HTMLCanvasElement {
   const turns = ((quarterTurns % 4) + 4) % 4;

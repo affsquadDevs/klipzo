@@ -1,5 +1,5 @@
 import { useEditor } from "../store";
-import { cropSource, type CropRect } from "../geometry";
+import { cropSource, cropCircle, type CropRect } from "../geometry";
 import { ASPECT_RATIOS } from "../aspectRatios";
 
 interface Props {
@@ -41,6 +41,15 @@ export function CropPanel({ cropRect, setCropRect, aspectId, setAspectId }: Prop
     });
   }
 
+  function applyCircleCrop() {
+    if (!cropRect) return;
+    commit((d) => {
+      d.source = cropCircle(d.source, cropRect);
+      d.width = d.source.width;
+      d.height = d.source.height;
+    });
+  }
+
   function resetCrop() {
     setCropRect({ x: 0, y: 0, width: iw, height: ih });
     setAspectId("free");
@@ -69,6 +78,12 @@ export function CropPanel({ cropRect, setCropRect, aspectId, setAspectId }: Prop
         <button className="k-btn k-btn-ghost ed-btn-sm" onClick={resetCrop}>Reset</button>
         <button className="k-btn k-btn-primary ed-btn-sm" onClick={applyCrop}>Apply crop</button>
       </div>
+      <button className="k-btn k-btn-ghost ed-btn-sm ed-fullbtn" onClick={applyCircleCrop}>
+        ⭕ Crop to circle
+      </button>
+      <p className="ed-panel__hint">
+        Pick the 1:1 ratio for a perfect circle, then export as PNG or WebP to keep the transparent corners.
+      </p>
     </div>
   );
 }
