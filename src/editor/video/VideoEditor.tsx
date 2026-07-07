@@ -32,6 +32,8 @@ interface Props {
   onClose: () => void;
   /** True when the store already holds a project loaded from a .klipzo file. */
   projectPreloaded?: boolean;
+  /** Additional video files to append as clips (multi-file import / merge). */
+  extraFiles?: File[];
 }
 
 const REFRAME_PRESETS = [
@@ -65,11 +67,19 @@ function resolveVideoPreset(): Mode {
     effects: "effects",
     captions: "captions",
     speed: "clips",
+    mute: "clips",
+    merge: "clips",
   };
   return map[raw] ?? "clips";
 }
 
-export function VideoEditor({ media, onClose, projectPreloaded = false }: Props) {
+/** Raw ?tool= key, used for preset-specific behaviour (auto-mute, merge). */
+function presetKey(): string {
+  if (typeof window === "undefined") return "";
+  return (new URLSearchParams(window.location.search).get("tool") ?? "").split(":")[0] ?? "";
+}
+
+export function VideoEditor({ media, onClose, projectPreloaded = false, extraFiles = [] }: Props) {
   const project = useTimeline((s) => s.project);
   const addAsset = useTimeline((s) => s.addAsset);
   const loadProjectData = useTimeline((s) => s.loadProjectData);
@@ -149,14 +159,30 @@ export function VideoEditor({ media, onClose, projectPreloaded = false }: Props)
     if (projectPreloaded || !media) return () => resetTimeline();
     let cancelled = false;
     setImporting(true);
+    const key = presetKey();
     probeAsset(media.file)
-      .then((asset) => {
+      .then(async (asset) => {
         if (cancelled) {
           URL.revokeObjectURL(asset.url);
           return;
         }
         addAsset(asset);
+        // Mute tool: open with the clip silenced, ready to export.
+        if (key === "mute") useTimeline.getState().setClipVolume(0, 0, false);
         track("file_imported", { media_kind: "video" });
+        // Merge / multi-file import: append the remaining video files as clips.
+        for (const f of extraFiles) {
+          try {
+            const extra = await probeAsset(f);
+            if (cancelled) {
+              URL.revokeObjectURL(extra.url);
+              return;
+            }
+            addAsset(extra);
+          } catch {
+            /* skip a clip that won't probe */
+          }
+        }
       })
       .catch((e) => {
         if (!cancelled) setLoadError(e instanceof ProbeError ? e.message : "Couldn’t open this video.");

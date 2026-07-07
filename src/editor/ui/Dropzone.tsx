@@ -54,6 +54,7 @@ export function Dropzone({ onFiles }: Props) {
           ref={inputRef}
           type="file"
           accept="image/*,video/*,audio/*,.klipzo"
+          multiple
           hidden
           onChange={(e) => {
             if (e.target.files?.length) onFiles(e.target.files);

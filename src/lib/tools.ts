@@ -177,6 +177,30 @@ export const VIDEO_TOOLS: Tool[] = [
     status: "v1",
   },
   {
+    slug: "mute-video",
+    kind: "video",
+    label: "Mute video",
+    h1: "Mute a video online, free and private",
+    title: "Mute Video Online Free, No Upload, No Watermark",
+    description:
+      "Remove the sound from a video in your browser. Your clip opens muted, ready to export silent. No upload, no account, no watermark, and nothing leaves your device.",
+    editorPreset: "mute",
+    tagline: "Silence a clip in one step.",
+    status: "v1",
+  },
+  {
+    slug: "merge-video",
+    kind: "video",
+    label: "Merge videos",
+    h1: "Merge videos online, free and private",
+    title: "Merge Videos Online Free, No Upload, No Watermark",
+    description:
+      "Join two or more clips into one video in your browser. Drop them all in, reorder on the timeline, and export. No upload, no account, and nothing leaves your device.",
+    editorPreset: "merge",
+    tagline: "Join clips into one, on your device.",
+    status: "v1",
+  },
+  {
     slug: "crop-video",
     kind: "video",
     label: "Crop video",

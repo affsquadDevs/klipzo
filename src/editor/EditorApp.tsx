@@ -90,9 +90,11 @@ class EditorErrorBoundary extends Component<
 export default function EditorApp() {
   const [media, setMedia] = useState<LoadedMedia | null>(null);
   const [projectLoaded, setProjectLoaded] = useState(false);
+  const [extraFiles, setExtraFiles] = useState<File[]>([]);
 
   async function handleFiles(files: FileList | File[]) {
-    const file = Array.from(files)[0];
+    const arr = Array.from(files);
+    const file = arr[0];
     if (!file) return;
 
     // A .klipzo project file opens straight into the video editor with its embedded
@@ -117,6 +119,8 @@ export default function EditorApp() {
       return;
     }
     setProjectLoaded(false);
+    // Multiple videos dropped/selected at once → append the rest as clips (merge).
+    setExtraFiles(kind === "video" ? arr.slice(1).filter((f) => classifyFile(f) === "video") : []);
     setMedia({ file, kind, url: URL.createObjectURL(file) });
   }
 
@@ -124,6 +128,7 @@ export default function EditorApp() {
     if (media) URL.revokeObjectURL(media.url);
     setMedia(null);
     setProjectLoaded(false);
+    setExtraFiles([]);
   }
 
   const active = Boolean(media) || projectLoaded;
@@ -152,7 +157,7 @@ export default function EditorApp() {
             {media?.kind === "image" ? (
               <PhotoEditor media={media} onClose={reset} />
             ) : (
-              <VideoEditor media={media} onClose={reset} projectPreloaded={projectLoaded} />
+              <VideoEditor media={media} onClose={reset} projectPreloaded={projectLoaded} extraFiles={extraFiles} />
             )}
           </Suspense>
         </EditorErrorBoundary>
