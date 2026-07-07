@@ -14,6 +14,7 @@ import { AdjustPanel } from "./panels/AdjustPanel";
 import { FiltersPanel } from "./panels/FiltersPanel";
 import { CropPanel } from "./panels/CropPanel";
 import { BlurPanel } from "./panels/BlurPanel";
+import { MetadataPanel } from "./panels/MetadataPanel";
 import { TransformPanel } from "./panels/TransformPanel";
 import { ResizePanel } from "./panels/ResizePanel";
 import { TextPanel } from "./panels/TextPanel";
@@ -38,6 +39,7 @@ const TOOLS: Array<{ id: ToolId; label: string; icon: string }> = [
   { id: "text", label: "Text", icon: "T" },
   { id: "shapes", label: "Shapes", icon: "▭" },
   { id: "draw", label: "Draw", icon: "✎" },
+  { id: "metadata", label: "EXIF", icon: "ℹ️" },
 ];
 
 /** Map a landing-page preset (?tool=) to an editor tool + optional auto-export. */
@@ -50,6 +52,8 @@ function resolvePreset(): { tool: ToolId; autoExport: boolean; meme: boolean } {
     circle: "crop",
     blur: "blur",
     censor: "blur",
+    exif: "metadata",
+    metadata: "metadata",
     resize: "resize",
     rotate: "transform",
     text: "text",
@@ -266,6 +270,7 @@ export function PhotoEditor({ media, onClose }: Props) {
           <CropPanel cropRect={cropRect} setCropRect={setCropRect} aspectId={aspectId} setAspectId={setAspectId} />
         )}
         {activeTool === "blur" && <BlurPanel blurRect={blurRect} />}
+        {activeTool === "metadata" && <MetadataPanel file={media.file} />}
         {activeTool === "transform" && <TransformPanel />}
         {activeTool === "resize" && <ResizePanel />}
         {activeTool === "text" && <TextPanel />}

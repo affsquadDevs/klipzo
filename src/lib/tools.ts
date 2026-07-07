@@ -174,6 +174,18 @@ export const PHOTO_TOOLS: Tool[] = [
     status: "v1",
   },
   {
+    slug: "remove-exif",
+    kind: "photo",
+    label: "Remove EXIF",
+    h1: "Remove EXIF metadata from a photo, free and private",
+    title: "Remove EXIF Data Online Free, Strip GPS and Camera Info",
+    description:
+      "See the hidden EXIF metadata in your photo (camera, date, GPS location) and export a clean copy with all of it removed. It runs in your browser, so nothing is uploaded.",
+    editorPreset: "exif",
+    tagline: "See and strip hidden photo metadata.",
+    status: "v1",
+  },
+  {
     slug: "remove-background",
     kind: "photo",
     label: "Remove background",

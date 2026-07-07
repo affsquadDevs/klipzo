@@ -58,7 +58,8 @@ export type ToolId =
   | "resize"
   | "text"
   | "shapes"
-  | "draw";
+  | "draw"
+  | "metadata";
 
 let counter = 0;
 export function overlayId(prefix = "ov"): string {
