@@ -25,7 +25,16 @@ function cloneSnapshot(s: Snapshot): Snapshot {
     width: s.width,
     height: s.height,
     adjustments: { ...s.adjustments },
-    overlays: s.overlays.map((o) => ({ ...o, points: "points" in o ? [...o.points] : undefined }) as Overlay),
+    // Deep-copy the points array only for overlays that actually have one (line/draw).
+    // Never write a `points: undefined` key onto text/shape overlays: a second clone
+    // would then see `"points" in o` true and do `[...undefined]`, throwing — which
+    // silently broke every edit (and undo/redo) once any overlay existed.
+    overlays: s.overlays.map((o) => {
+      const clone = { ...o } as Overlay;
+      const pts = (o as { points?: number[] }).points;
+      if (Array.isArray(pts)) (clone as { points: number[] }).points = [...pts];
+      return clone;
+    }),
   };
 }
 
