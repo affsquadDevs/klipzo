@@ -1,5 +1,6 @@
 ---
 import { t } from "../i18n";
+import Logo from "./Logo.astro";
 import { SITE, ORG, isConfigured } from "../config/site";
 import { PHOTO_TOOLS, VIDEO_TOOLS } from "../lib/tools";
 import { formatDate } from "../i18n/format";
@@ -13,8 +14,8 @@ const video = VIDEO_TOOLS.filter((x) => x.status === "v1").slice(0, 6);
 <footer class="k-footer">
   <div class="k-container k-footer__grid">
     <div class="k-footer__brand">
-      <a href="/" class="k-header__brand" style="color:var(--color-fg)">
-        <span class="k-logo" aria-hidden="true"></span>
+      <a href="/" class="k-footer__brandlink">
+        <Logo />
         <span>{t("brand.name")}</span>
       </a>
       <p class="k-footer__pitch">{t("brand.tagline")}</p>
@@ -77,6 +78,15 @@ const video = VIDEO_TOOLS.filter((x) => x.status === "v1").slice(0, 6);
   }
   .k-footer__brand {
     max-width: 22rem;
+  }
+  .k-footer__brandlink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--color-fg);
+    letter-spacing: -0.02em;
   }
   .k-footer__pitch {
     margin-top: 0.75rem;

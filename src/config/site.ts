@@ -39,7 +39,7 @@ export const LOCALE = {
 /** Trust / E-E-A-T identity (§8). Do NOT leave blank in production. */
 export const ORG = {
   legalName: "__ORG_LEGAL_NAME__",
-  contactEmail: "__CONTACT_EMAIL__",
+  contactEmail: "hello@klipzo.app",
 } as const;
 
 export const AUTHOR = {

@@ -59,6 +59,16 @@ const schema = [
 <BaseLayout title={`${SITE.brand} — Free In-Browser Photo & Video Editor`} description={SITE.description} theme="light" schema={schema}>
   <!-- Hero -->
   <section class="k-hero">
+    <div class="k-hero__decor" aria-hidden="true">
+      <span class="k-hero__grid"></span>
+      <span class="k-hero__orb k-hero__orb--a"></span>
+      <span class="k-hero__orb k-hero__orb--b"></span>
+      <span class="k-hero__chip k-hero__chip--1">✂️</span>
+      <span class="k-hero__chip k-hero__chip--2">🎬</span>
+      <span class="k-hero__chip k-hero__chip--3">🖼️</span>
+      <span class="k-hero__chip k-hero__chip--4">🎵</span>
+      <span class="k-hero__chip k-hero__chip--5">✨</span>
+    </div>
     <div class="k-container">
       <p class="k-hero__eyebrow">🔒 100% on-device · nothing uploaded</p>
       <h1 class="k-hero__title">{t("home.hero.title")}</h1>
@@ -161,10 +171,125 @@ const schema = [
 
 <style>
   .k-hero {
+    position: relative;
+    overflow: hidden;
     padding-block: clamp(3rem, 8vw, 6rem) clamp(2rem, 5vw, 4rem);
     background:
       radial-gradient(ellipse 80% 60% at 50% -10%, color-mix(in srgb, var(--color-accent) 14%, transparent), transparent 70%);
     text-align: center;
+  }
+  .k-hero > .k-container {
+    position: relative;
+    z-index: 1;
+  }
+  .k-hero__decor {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  /* Faint dot grid, fading out toward the edges. */
+  .k-hero__grid {
+    position: absolute;
+    inset: -1px;
+    background-image: radial-gradient(
+      color-mix(in srgb, var(--color-fg) 9%, transparent) 1px,
+      transparent 1.4px
+    );
+    background-size: 24px 24px;
+    -webkit-mask-image: radial-gradient(ellipse 60% 55% at 50% 32%, #000 28%, transparent 72%);
+    mask-image: radial-gradient(ellipse 60% 55% at 50% 32%, #000 28%, transparent 72%);
+  }
+  /* Soft gradient orbs. */
+  .k-hero__orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(56px);
+  }
+  .k-hero__orb--a {
+    width: 24rem;
+    height: 24rem;
+    top: -9rem;
+    left: -7rem;
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--color-accent) 55%, transparent),
+      transparent 68%
+    );
+    opacity: 0.5;
+  }
+  .k-hero__orb--b {
+    width: 22rem;
+    height: 22rem;
+    right: -8rem;
+    bottom: -11rem;
+    background: radial-gradient(circle, #8a5cff, transparent 68%);
+    opacity: 0.32;
+  }
+  /* Floating tool chips (desktop only; ambient, behind the copy). */
+  .k-hero__chip {
+    position: absolute;
+    display: none;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    font-size: 1.35rem;
+    border-radius: 0.9rem;
+    background: color-mix(in srgb, var(--color-surface) 82%, transparent);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-panel);
+    backdrop-filter: blur(4px);
+    animation: k-hero-float 7s ease-in-out infinite;
+  }
+  .k-hero__chip--1 {
+    top: 17%;
+    left: 8%;
+    transform: rotate(-8deg);
+    animation-delay: 0s;
+  }
+  .k-hero__chip--2 {
+    top: 29%;
+    right: 9%;
+    transform: rotate(7deg);
+    animation-delay: -1.2s;
+  }
+  .k-hero__chip--3 {
+    bottom: 19%;
+    left: 13%;
+    transform: rotate(6deg);
+    animation-delay: -2.4s;
+  }
+  .k-hero__chip--4 {
+    bottom: 23%;
+    right: 12%;
+    transform: rotate(-6deg);
+    animation-delay: -3.6s;
+  }
+  .k-hero__chip--5 {
+    top: 12%;
+    right: 22%;
+    transform: rotate(10deg);
+    animation-delay: -4.8s;
+  }
+  @keyframes k-hero-float {
+    0%,
+    100% {
+      translate: 0 0;
+    }
+    50% {
+      translate: 0 -10px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .k-hero__chip {
+      animation: none;
+    }
+  }
+  @media (min-width: 820px) {
+    .k-hero__chip {
+      display: grid;
+    }
   }
   .k-hero__eyebrow {
     display: inline-block;

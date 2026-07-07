@@ -168,6 +168,17 @@
     text-underline-offset: 2px;
     text-decoration: underline;
   }
+  /* Button-styled links inside prose (e.g. a page's CTA) must render as buttons,
+     not underlined accent-colored text. Specificity beats `.k-prose a`. */
+  .k-prose a.k-btn {
+    text-decoration: none;
+  }
+  .k-prose a.k-btn-primary {
+    color: var(--color-accent-contrast);
+  }
+  .k-prose a.k-btn-ghost {
+    color: var(--color-fg);
+  }
   .k-prose strong {
     color: var(--color-fg);
   }

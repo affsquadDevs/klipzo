@@ -18,8 +18,9 @@ grep -rn "__[A-Z0-9_]\+__" src public *.json *.toml
 | `AUTHOR_NAME` | `src/config/site.ts` → `AUTHOR.name` | Byline + Person schema (E-E-A-T) | Guides trust |
 | `AUTHOR_CREDENTIALS` | `src/config/site.ts` → `AUTHOR.credentials` | Establishes editing expertise | Guides trust |
 | `AUTHOR_BIO_SHORT` | `src/config/site.ts` → `AUTHOR.bioShort` | About + byline | Guides trust |
-| `CONTACT_EMAIL` | `src/config/site.ts` → `ORG.contactEmail` | /contact, Organization schema | Trust pages |
 | `ORG_LEGAL_NAME` | `src/config/site.ts` → `ORG.legalName` | Footer, legal pages, Organization | Legal pages |
+
+`CONTACT_EMAIL` is set to `hello@klipzo.app` (`ORG.contactEmail`).
 
 ## Assets to add to `public/`
 
@@ -27,9 +28,11 @@ grep -rn "__[A-Z0-9_]\+__" src public *.json *.toml
 | --- | --- |
 | `/og/default.png` | Default social share image, 1200×630 |
 | `/logo.png` | Organization logo for schema (square, ≥112px) |
-| `/apple-touch-icon.png` | 180×180 iOS home-screen icon |
-| `/icon-192.png`, `/icon-512.png` | PWA manifest icons |
 | `/authors/author.jpg` | Author photo for byline + Person schema |
+
+Done: `/favicon.svg`, `/favicon-32.png`, `/apple-touch-icon.png`, `/icon-192.png`,
+`/icon-512.png` are the "K" brand mark, generated from the favicon SVG (regenerate with
+the sharp snippet if the mark changes). The header/footer `<Logo />` uses the same geometry.
 
 ## Reserved — do NOT implement (see brief §1)
 

@@ -1,0 +1,48 @@
+---
+/**
+ * Klipzo brand mark — a rounded "K" tile. Shared by the header, footer, and any
+ * other brand placement so the on-page logo always matches the favicon
+ * (public/favicon.svg uses the same geometry). Each instance gets a unique
+ * gradient id so multiple logos on one page don't collide.
+ */
+interface Props {
+  size?: string;
+  class?: string;
+}
+const { size = "1.6rem", class: className } = Astro.props;
+const gid = "klogo-" + Math.random().toString(36).slice(2, 9);
+---
+
+<span class:list={["k-logo", className]} aria-hidden="true" style={`--k-logo-size:${size}`}>
+  <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#4f7cff"></stop>
+        <stop offset="1" stop-color="#8a5cff"></stop>
+      </linearGradient>
+    </defs>
+    <rect width="32" height="32" rx="8" fill={`url(#${gid})`}></rect>
+    <path
+      d="M11 8v16M11 16l9-8M11 16l9 8"
+      fill="none"
+      stroke="#fff"
+      stroke-width="2.6"
+      stroke-linecap="round"
+      stroke-linejoin="round"></path>
+  </svg>
+</span>
+
+<style>
+  .k-logo {
+    width: var(--k-logo-size, 1.6rem);
+    height: var(--k-logo-size, 1.6rem);
+    flex: none;
+    display: block;
+    filter: drop-shadow(0 1px 2px rgb(79 124 255 / 0.35));
+  }
+  .k-logo svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+</style>

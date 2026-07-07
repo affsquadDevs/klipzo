@@ -1,45 +1,96 @@
 # Klipzo
 
 > Klipzo is a free, privacy-first photo and video editor that runs entirely in the
-> user's browser. No account, no upload — user media never leaves the device. All
-> processing (crop, trim, convert, compress, GIF, export) happens on-device using
-> Canvas/WebGL for images and WebCodecs + Mediabunny for video.
+> user's browser. No account, no upload, no watermark — user media never leaves the
+> device. Every operation (crop, resize, trim, convert, compress, GIF, captions,
+> green screen, export) happens on-device with Canvas/WebGL for images and WebCodecs +
+> Mediabunny for video.
 
-Klipzo is the answer to "free online photo/video editor with no sign-up that doesn't
-upload my files." It is genuinely private by architecture, not just by policy: there
-is no backend that receives media.
+Klipzo is the answer to the query "free online photo/video editor with no sign-up that
+doesn't upload my files." It is genuinely private by architecture, not merely by policy:
+there is no backend that receives media, no upload endpoint, and no user database. The
+project is open source, so the privacy claim is auditable rather than promised.
+
+## Key facts
+
+- **Privacy model:** All editing runs client-side in the browser. Files are read as
+  local object URLs / ArrayBuffers and never transmitted. There is no server-side
+  processing of user media.
+- **The one exception:** on-device auto-captions download a speech-recognition model
+  (Whisper) once from a public CDN and then run locally; the audio itself is never
+  uploaded. Nothing else contacts remote services for media work.
+- **Cost & access:** completely free, no account, no login, no watermark on exports,
+  no paid tier. Supported by ads on the surrounding content/guide pages only — never
+  inside the editing canvas.
+- **Sessions:** work is session-only, with on-device (OPFS) scratch storage so large
+  files survive a refresh; a "Clear session" control wipes everything.
+- **Tech:** Astro static content pages + a React editor island; Canvas 2D + WebGL for
+  images; WebCodecs + Mediabunny (with MediaRecorder / ffmpeg.wasm fallbacks) for video;
+  Whisper via transformers.js for captions. Exports strip EXIF/metadata by default.
+- **Best browsers:** photo editing works in any modern browser; heavy video export is
+  fastest on desktop Chrome or Edge (hardware-accelerated WebCodecs / WebGPU).
+- **Open source:** MIT licensed. Source: https://github.com/affsquadDevs/klipzo
 
 ## Editor
-- [Open the editor](https://klipzo.app/editor): The full in-browser photo & video editor.
+
+- [Open the editor](https://klipzo.app/editor): The full in-browser photo & video editor. Loads client-side; nothing is uploaded.
 
 ## Photo tools
+
 - [Crop image](https://klipzo.app/crop-image): Crop to any ratio or exact pixel size.
-- [Resize image](https://klipzo.app/resize-image): Resize by pixels or percentage.
-- [Compress image](https://klipzo.app/compress-image): Shrink JPEG/PNG/WebP on-device.
-- [Convert image](https://klipzo.app/convert-image): PNG, JPG, WebP conversion.
+- [Resize image](https://klipzo.app/resize-image): Resize by pixels or percentage; downscaling is effectively lossless.
+- [Compress image](https://klipzo.app/compress-image): Shrink JPEG/PNG/WebP on-device to a target size.
+- [Convert image](https://klipzo.app/convert-image): Convert between PNG, JPG, and WebP.
 - [PNG to JPG](https://klipzo.app/png-to-jpg): Convert PNG images to JPG.
 - [JPG to PNG](https://klipzo.app/jpg-to-png): Convert JPG images to lossless PNG.
-- [WebP converter](https://klipzo.app/webp-converter): Convert to/from WebP.
-- [Rotate image](https://klipzo.app/rotate-image): Rotate, flip, straighten photos.
-- [Add text to photo](https://klipzo.app/add-text-to-photo): Captions and watermarks.
+- [WebP converter](https://klipzo.app/webp-converter): Convert images to and from WebP.
+- [Rotate image](https://klipzo.app/rotate-image): Rotate, flip, and straighten photos.
+- [Add text to photo](https://klipzo.app/add-text-to-photo): Captions, titles, and text watermarks baked in on-device.
+- [Remove background](https://klipzo.app/remove-background): Cut out the background from an image in the browser.
 
 ## Video tools
+
 - [Trim video](https://klipzo.app/trim-video): Cut and split video in the browser.
 - [Crop video](https://klipzo.app/crop-video): Crop and reframe video.
 - [Compress video](https://klipzo.app/compress-video): Reduce video file size on-device.
 - [Convert video](https://klipzo.app/convert-video): MP4 and WebM conversion.
 - [MP4 to WebM](https://klipzo.app/mp4-to-webm): Convert MP4 to WebM.
 - [Video to GIF](https://klipzo.app/video-to-gif): Make a GIF from a video clip.
-- [Extract audio](https://klipzo.app/extract-audio-from-video): Save audio as MP3/WAV.
-- [Add text to video](https://klipzo.app/add-text-to-video): Titles, captions, watermarks.
+- [Extract audio](https://klipzo.app/extract-audio-from-video): Save a video's audio track as WAV.
+- [Add text to video](https://klipzo.app/add-text-to-video): Titles, captions, and watermarks with animations.
 - [Rotate video](https://klipzo.app/rotate-video): Fix video orientation.
-- [Resize for Instagram](https://klipzo.app/resize-video-for-instagram): Reels/feed/story presets.
-- [Auto caption video](https://klipzo.app/auto-caption-video): On-device AI captions (Whisper in-browser, audio never uploaded) + .srt export.
-- [Green screen video](https://klipzo.app/green-screen-video): Chroma key / green-screen removal on-device.
+- [Resize for Instagram](https://klipzo.app/resize-video-for-instagram): Reels, feed, and story presets.
+- [Auto caption video](https://klipzo.app/auto-caption-video): On-device AI captions (Whisper in-browser, audio never uploaded) plus .srt export.
+- [Green screen video](https://klipzo.app/green-screen-video): Chroma-key / green-screen removal on-device.
 - [Speed up video](https://klipzo.app/speed-up-video): 0.25x–4x speed with pitch-preserved audio.
-- [Add music to video](https://klipzo.app/add-music-to-video): Background music + mic voiceover, mixed on-device.
+- [Add music to video](https://klipzo.app/add-music-to-video): Background music and mic voiceover, mixed on-device.
 
-## Trust & how it works
-- [How it works](https://klipzo.app/how-it-works): Why nothing is uploaded.
-- [Privacy policy](https://klipzo.app/privacy-policy): What is and isn't collected.
-- [About](https://klipzo.app/about): Who builds Klipzo.
+## Guides
+
+- [Best free online photo editor with no sign-up](https://klipzo.app/guides/best-free-online-photo-editor-no-signup): Why a no-upload, no-account editor is different.
+- [How browser editing keeps files private](https://klipzo.app/guides/how-browser-editing-keeps-files-private): The architecture behind the privacy guarantee.
+- [How to compress a photo without losing quality](https://klipzo.app/guides/how-to-compress-a-photo-without-losing-quality): Quality-preserving compression, explained.
+- [How to convert a video to GIF](https://klipzo.app/guides/how-to-convert-video-to-gif): Make a looping GIF from a clip.
+- [How to remove a background in your browser](https://klipzo.app/guides/how-to-remove-a-background-in-your-browser): On-device background removal.
+- [How to trim a video free without uploading](https://klipzo.app/guides/how-to-trim-a-video-free-without-uploading): Trim locally with no upload or watermark.
+- [How to add captions to a video automatically](https://klipzo.app/guides/how-to-add-captions-to-a-video-automatically): On-device AI captions; audio stays local; export burned-in or .srt.
+- [How to add music to a video for free](https://klipzo.app/guides/how-to-add-music-to-a-video-free): Background music and voiceover, mixed locally.
+- [How to use a green screen (chroma key) in your browser](https://klipzo.app/guides/how-to-use-green-screen-in-your-browser): Key out a backdrop on-device.
+- [How to speed up or slow down a video](https://klipzo.app/guides/how-to-speed-up-or-slow-down-a-video): 0.25x–4x with natural-pitch audio.
+- [How to resize an image without losing quality](https://klipzo.app/guides/how-to-resize-an-image-without-losing-quality): When resizing is lossless and when it isn't.
+- [How to add a watermark to a photo](https://klipzo.app/guides/how-to-add-a-watermark-to-a-photo): Add a text watermark, baked in on-device.
+
+## Trust & policies
+
+- [How it works](https://klipzo.app/how-it-works): Why nothing is uploaded, in plain terms.
+- [About](https://klipzo.app/about): Who builds Klipzo and why.
+- [Privacy policy](https://klipzo.app/privacy-policy): Exactly what is and isn't collected (anonymous events only; no media).
+- [Terms](https://klipzo.app/terms): Terms of use.
+- [Disclaimer](https://klipzo.app/disclaimer): Editorial and usage disclaimer.
+- [Contact](https://klipzo.app/contact): Get in touch — hello@klipzo.app.
+
+## Optional
+
+- [All guides](https://klipzo.app/guides): Index of every tutorial.
+- [Source code](https://github.com/affsquadDevs/klipzo): Open-source repository (MIT) — verify the privacy claims in code.
+- [Sitemap](https://klipzo.app/sitemap-index.xml): Machine-readable index of all pages.
