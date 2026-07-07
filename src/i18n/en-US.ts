@@ -23,13 +23,13 @@ export const strings = {
   // Home / hero
   "home.hero.title": "The free, private photo & video editor that runs in your browser",
   "home.hero.subtitle":
-    "Crop, trim, convert, and export photos and video — instantly. No account, no upload. Your files never leave your device.",
+    "Crop, trim, convert, and export photos and video instantly. No account, no upload. Your files never leave your device.",
   "home.hero.ctaPrimary": "Open the editor",
   "home.hero.ctaSecondary": "See how it works",
   "home.trust.noUpload": "Nothing is uploaded",
   "home.trust.noAccount": "No sign-up, ever",
   "home.trust.onDevice": "Runs 100% on your device",
-  "home.trust.free": "Free — no watermarks",
+  "home.trust.free": "Free, no watermarks",
 
   // Privacy banner (shown during processing)
   "privacy.processingLocal": "Processing locally on your device — nothing is uploaded.",
@@ -131,7 +131,7 @@ export const strings = {
   // Consent / cookies (§7)
   "consent.title": "Cookies & ads",
   "consent.body":
-    "We use cookies for ads and anonymous analytics. Your photos and videos are never uploaded or shared — this only concerns website usage.",
+    "We use cookies for ads and anonymous analytics. Your photos and videos are never uploaded or shared. This only concerns website usage.",
   "consent.accept": "Accept all",
   "consent.reject": "Reject non-essential",
   "consent.manage": "Manage choices",

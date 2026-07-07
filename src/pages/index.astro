@@ -18,7 +18,7 @@ const faqs: FaqItem[] = [
   {
     question: "Are my photos and videos uploaded anywhere?",
     answer:
-      "No. All editing happens inside your browser on your own device. Your files are never sent to a server, to us, or to any third party — that is the core promise of Klipzo.",
+      "No. All editing happens inside your browser on your own device. Your files are never sent to a server, to us, or to any third party. That is the core promise of Klipzo.",
   },
   {
     question: "Do I need to create an account?",
@@ -56,7 +56,7 @@ const schema = [
 ];
 ---
 
-<BaseLayout title={`${SITE.brand} — Free In-Browser Photo & Video Editor`} description={SITE.description} theme="light" schema={schema}>
+<BaseLayout title={`${SITE.brand}: Free In-Browser Photo & Video Editor`} description={SITE.description} theme="light" schema={schema}>
   <!-- Hero -->
   <section class="k-hero">
     <div class="k-hero__decor" aria-hidden="true">
@@ -90,26 +90,26 @@ const schema = [
   <section class="k-container k-section">
     <div class="k-section__head">
       <h2>How it works</h2>
-      <p>Three steps — and your file never leaves your device.</p>
+      <p>Three steps, and your file never leaves your device.</p>
     </div>
     <ol class="k-steps">
       <li class="k-step k-card">
         <span class="k-step__num">1</span>
         <span class="k-step__icon" aria-hidden="true">📂</span>
         <h3>Drop your file</h3>
-        <p>Open a photo or video. It loads straight into the page — no upload, no queue, no size cap from us.</p>
+        <p>Open a photo or video. It loads straight into the page: no upload, no queue, no size cap from us.</p>
       </li>
       <li class="k-step k-card">
         <span class="k-step__num">2</span>
         <span class="k-step__icon" aria-hidden="true">✨</span>
         <h3>Edit on your device</h3>
-        <p>Crop, trim, filter, caption, green-screen, and export presets — all running on your own hardware.</p>
+        <p>Crop, trim, filter, caption, green-screen, and export presets, all running on your own hardware.</p>
       </li>
       <li class="k-step k-card">
         <span class="k-step__num">3</span>
         <span class="k-step__icon" aria-hidden="true">⬇️</span>
         <h3>Export &amp; you’re done</h3>
-        <p>Download the result at full quality. Nothing was ever sent anywhere — close the tab and it’s gone.</p>
+        <p>Download the result at full quality. Nothing was ever sent anywhere. Close the tab and it’s gone.</p>
       </li>
     </ol>
   </section>
@@ -118,7 +118,7 @@ const schema = [
   <section class="k-container k-section">
     <div class="k-section__head">
       <h2>Photo tools</h2>
-      <p>Edit, convert, and optimize images — instantly, in your browser.</p>
+      <p>Edit, convert, and optimize images instantly, in your browser.</p>
     </div>
     <div class="k-grid">
       {PHOTO_TOOLS.map((tool) => <ToolCard tool={tool} />)}
@@ -146,7 +146,7 @@ const schema = [
       <a class="k-feature k-card" href="/auto-caption-video">
         <span class="k-feature__icon" aria-hidden="true">💬</span>
         <h3>AI auto-captions</h3>
-        <p>On-device speech-to-text writes your subtitles — audio never uploaded. Export burned-in or as .srt.</p>
+        <p>On-device speech-to-text writes your subtitles. Audio never uploaded. Export burned-in or as .srt.</p>
       </a>
       <a class="k-feature k-card" href="/green-screen-video">
         <span class="k-feature__icon" aria-hidden="true">🟢</span>
@@ -171,7 +171,7 @@ const schema = [
       <a class="k-feature k-card" href="/video-to-gif">
         <span class="k-feature__icon" aria-hidden="true">🎞️</span>
         <h3>Video to GIF</h3>
-        <p>Turn any clip into a crisp, looping GIF — trimmed and sized exactly how you want.</p>
+        <p>Turn any clip into a crisp, looping GIF, trimmed and sized exactly how you want.</p>
       </a>
     </div>
   </section>
@@ -180,7 +180,7 @@ const schema = [
   <section class="k-container k-section">
     <div class="k-section__head">
       <h2>How Klipzo compares</h2>
-      <p>The same edits — without the upload, the account, or the watermark.</p>
+      <p>The same edits, without the upload, the account, or the watermark.</p>
     </div>
     <div class="k-compare">
       <table class="k-compare__table">
@@ -241,7 +241,7 @@ const schema = [
       </div>
       <div class="k-why__item k-card">
         <h3>⚡ Instant, no round-trip</h3>
-        <p>There is no server to wait on. Open a file and start editing immediately — even large videos.</p>
+        <p>There is no server to wait on. Open a file and start editing immediately, even large videos.</p>
       </div>
       <div class="k-why__item k-card">
         <h3>🙅 No account, no watermark</h3>
@@ -263,7 +263,7 @@ const schema = [
         <p>
           You don’t have to trust a privacy promise. Open your browser’s developer tools,
           switch to the <strong>Network</strong> tab, then import, edit, and export a file.
-          You’ll watch Klipzo load its own code — and <strong>not one byte of your photo or
+          You’ll watch Klipzo load its own code, and <strong>not one byte of your photo or
           video leaves your device</strong>.
         </p>
         <p class="k-verify__hint"><code>DevTools → Network → edit a file → 0 uploads</code></p>
@@ -281,7 +281,7 @@ const schema = [
       <div class="k-persona k-card">
         <span class="k-persona__icon" aria-hidden="true">🎬</span>
         <h3>Creators</h3>
-        <p>Reels, captions, GIFs, and quick cuts — no watermark and no upload wait.</p>
+        <p>Reels, captions, GIFs, and quick cuts, no watermark and no upload wait.</p>
       </div>
       <div class="k-persona k-card">
         <span class="k-persona__icon" aria-hidden="true">🎓</span>
@@ -291,7 +291,7 @@ const schema = [
       <div class="k-persona k-card">
         <span class="k-persona__icon" aria-hidden="true">🔒</span>
         <h3>Privacy-first</h3>
-        <p>IDs, documents, sensitive photos — edit them without them ever leaving your laptop.</p>
+        <p>IDs, documents, sensitive photos you can edit without them ever leaving your laptop.</p>
       </div>
       <div class="k-persona k-card">
         <span class="k-persona__icon" aria-hidden="true">⚡</span>
@@ -305,7 +305,7 @@ const schema = [
   <section class="k-container k-section">
     <div class="k-oss">
       <p class="k-oss__eyebrow">⭐ Open source</p>
-      <h2>Don’t take our word for it — read the code</h2>
+      <h2>Don’t take our word for it. Read the code</h2>
       <p>
         Klipzo is fully open source. The entire editor lives in one public repository, so you
         can verify that nothing is uploaded, audit exactly how your files are handled, or run
@@ -344,7 +344,7 @@ const schema = [
   <section class="k-container k-section">
     <div class="k-finalcta">
       <p class="k-finalcta__eyebrow">🔒 100% on-device · nothing uploaded</p>
-      <h2>Ready to edit — privately?</h2>
+      <h2>Ready to edit privately?</h2>
       <p class="k-finalcta__sub">Free, no account, nothing uploaded. Open the editor and start in seconds.</p>
       <div class="k-finalcta__actions">
         <a href="/editor" class="k-btn k-btn-primary k-finalcta__btn">Open the editor</a>

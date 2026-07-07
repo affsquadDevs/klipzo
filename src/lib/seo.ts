@@ -54,7 +54,7 @@ export function webApplicationSchema(opts?: { name?: string; url?: string; featu
   return {
     "@type": ["WebApplication", "SoftwareApplication"],
     "@id": opts?.url ? `${abs(opts.url)}#app` : IDS.webapp,
-    name: opts?.name ?? `${SITE.brand} — Free Online Photo & Video Editor`,
+    name: opts?.name ?? `${SITE.brand}: Free Online Photo & Video Editor`,
     url: opts?.url ? abs(opts.url) : base,
     applicationCategory: "MultimediaApplication",
     operatingSystem: "Any (web browser)",

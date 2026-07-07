@@ -22,7 +22,7 @@ export const SITE = {
   tagline: "Edit photos & video in your browser. Free. No sign-up. Nothing uploaded.",
   description:
     "Klipzo is a free, private photo and video editor that runs entirely in your browser. " +
-    "No account, no upload — your files never leave your device. Crop, trim, convert, and export instantly.",
+    "No account, no upload. Your files never leave your device. Crop, trim, convert, and export instantly.",
   /** Default social share image (public/, 1200×630). */
   ogImage: "/og/default.png",
   themeColor: "#0b0f17",
