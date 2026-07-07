@@ -9,7 +9,7 @@ const name = isConfigured(AUTHOR.name) ? AUTHOR.name : "Klipzo Editorial Team";
 const credentials = isConfigured(AUTHOR.credentials)
   ? AUTHOR.credentials
   : "Photo & video editing";
-const hasPhoto = isConfigured(AUTHOR.name); // only show the photo slot once a real author exists
+const hasPhoto = isConfigured(AUTHOR.photo); // show a photo only when one is set; else the brand "K" avatar
 ---
 
 <div class="byline">

@@ -38,16 +38,17 @@ export const LOCALE = {
 
 /** Trust / E-E-A-T identity (§8). Do NOT leave blank in production. */
 export const ORG = {
-  legalName: "__ORG_LEGAL_NAME__",
+  legalName: "Klipzo Team",
   contactEmail: "hello@klipzo.app",
 } as const;
 
 export const AUTHOR = {
-  name: "__AUTHOR_NAME__",
+  name: "Klipzo Team",
   credentials: "__AUTHOR_CREDENTIALS__",
   bioShort: "__AUTHOR_BIO_SHORT__",
-  /** Optional: /public path to a real author photo for the byline + Person schema. */
-  photo: "/authors/author.jpg",
+  /** Optional: /public path to a real author photo. Empty = show the brand "K" avatar
+   *  in the byline and omit the Person image from schema. */
+  photo: "",
   /** Optional public profiles for Person `sameAs`. */
   sameAs: [] as string[],
 } as const;

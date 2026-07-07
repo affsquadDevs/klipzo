@@ -12,27 +12,25 @@ grep -rn "__[A-Z0-9_]\+__" src public *.json *.toml
 
 | Value | Where | Purpose | Blocking |
 | --- | --- | --- | --- |
-| `ADSENSE_PUBLISHER_ID` | `src/config/site.ts` → `MONETIZATION.adsensePublisherId`, `public/ads.txt` | AdSense units + ads.txt | Ads |
-| `GA4_MEASUREMENT_ID` | `src/config/site.ts` → `MONETIZATION.ga4MeasurementId` | GA4 (via GTM) | Analytics |
-| `GTM_CONTAINER_ID` | `src/config/site.ts` → `MONETIZATION.gtmContainerId` | Tag Manager container | Analytics/ads |
-| `AUTHOR_NAME` | `src/config/site.ts` → `AUTHOR.name` | Byline + Person schema (E-E-A-T) | Guides trust |
-| `AUTHOR_CREDENTIALS` | `src/config/site.ts` → `AUTHOR.credentials` | Establishes editing expertise | Guides trust |
-| `AUTHOR_BIO_SHORT` | `src/config/site.ts` → `AUTHOR.bioShort` | About + byline | Guides trust |
-| `ORG_LEGAL_NAME` | `src/config/site.ts` → `ORG.legalName` | Footer, legal pages, Organization | Legal pages |
+| `ADSENSE_PUBLISHER_ID` | `src/config/site.ts` → `MONETIZATION.adsensePublisherId`, `public/ads.txt` | AdSense units + ads.txt | Ads (post-launch) |
+| `GA4_MEASUREMENT_ID` | `src/config/site.ts` → `MONETIZATION.ga4MeasurementId` | GA4 (via GTM) | Analytics (post-launch) |
+| `GTM_CONTAINER_ID` | `src/config/site.ts` → `MONETIZATION.gtmContainerId` | Tag Manager container | Analytics/ads (post-launch) |
 
-`CONTACT_EMAIL` is set to `hello@klipzo.app` (`ORG.contactEmail`).
+`CONTACT_EMAIL` = `hello@klipzo.app`, `ORG_LEGAL_NAME` = `Klipzo Team`, `AUTHOR_NAME` =
+`Klipzo Team` are set (`src/config/site.ts`). `AUTHOR_CREDENTIALS` / `AUTHOR_BIO_SHORT`
+stay as placeholders — they degrade gracefully (byline shows a generic credential; the
+About bio section is hidden) and can be filled if a named author is ever added.
 
 ## Assets to add to `public/`
 
 | Path | Purpose |
 | --- | --- |
-| `/og/default.png` | Default social share image, 1200×630 |
-| `/logo.png` | Organization logo for schema (square, ≥112px) |
-| `/authors/author.jpg` | Author photo for byline + Person schema |
+| `/authors/author.jpg` | Optional — only if a named author with a photo is added. `AUTHOR.photo` is empty, so the byline shows the brand "K" avatar and the Person schema omits an image. |
 
 Done: `/favicon.svg`, `/favicon-32.png`, `/apple-touch-icon.png`, `/icon-192.png`,
-`/icon-512.png` are the "K" brand mark, generated from the favicon SVG (regenerate with
-the sharp snippet if the mark changes). The header/footer `<Logo />` uses the same geometry.
+`/icon-512.png`, `/logo.png` (Organization schema, 512²), and `/og/default.png`
+(1200×630 social card) — all the "K" brand mark, generated from the favicon SVG.
+The header/footer `<Logo />` uses the same geometry.
 
 ## Reserved — do NOT implement (see brief §1)
 
