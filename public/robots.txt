@@ -32,4 +32,4 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
-Sitemap: https://klipzo.app/sitemap-index.xml
+Sitemap: https://klipzo.app/sitemap.xml

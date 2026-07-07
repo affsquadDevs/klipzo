@@ -47,7 +47,7 @@ console.log(`\n[1] Secrets / real IDs not committed`);
 }
 
 console.log(`\n[2] Required files present`);
-for (const f of ["robots.txt", "ads.txt", "llms.txt", "sitemap-index.xml", "favicon.svg"]) {
+for (const f of ["robots.txt", "ads.txt", "llms.txt", "sitemap.xml", "favicon.svg"]) {
   existsSync(join(DIST, f)) ? ok(f) : bad(`missing ${f}`);
 }
 

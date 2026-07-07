@@ -93,4 +93,4 @@ project is open source, so the privacy claim is auditable rather than promised.
 
 - [All guides](https://klipzo.app/guides): Index of every tutorial.
 - [Source code](https://github.com/affsquadDevs/klipzo): Open-source repository (MIT) — verify the privacy claims in code.
-- [Sitemap](https://klipzo.app/sitemap-index.xml): Machine-readable index of all pages.
+- [Sitemap](https://klipzo.app/sitemap.xml): Machine-readable index of all pages.
