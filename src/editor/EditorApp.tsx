@@ -3,7 +3,7 @@
  * a privacy banner; Phase 2 mounts the photo canvas/tools, Phase 3 the video timeline.
  * This component and everything it imports must NEVER be imported by a content page.
  */
-import { Component, lazy, Suspense, useState, type ReactNode } from "react";
+import { Component, lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { EditorShell } from "./ui/EditorShell";
 import { Dropzone } from "./ui/Dropzone";
 import { classifyFile, type LoadedMedia } from "./core/media";
@@ -127,6 +127,20 @@ export default function EditorApp() {
   }
 
   const active = Boolean(media) || projectLoaded;
+
+  // Guard against losing unsaved work to an accidental refresh, tab close, or
+  // back-navigation. Edits live only in memory (nothing is uploaded), so once
+  // something is open the browser should confirm before the page unloads.
+  useEffect(() => {
+    if (!active) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      // Some older browsers still require a returnValue to show the prompt.
+      (e as unknown as { returnValue: string }).returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [active]);
 
   return (
     <EditorShell hasMedia={active} onReset={reset}>
