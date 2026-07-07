@@ -19,6 +19,9 @@ project is open source, so the privacy claim is auditable rather than promised.
 - **The one exception:** on-device auto-captions download a speech-recognition model
   (Whisper) once from a public CDN and then run locally; the audio itself is never
   uploaded. Nothing else contacts remote services for media work.
+- **Fonts:** the photo text tool ships 100+ Google Fonts (sans-serif, serif, display,
+  handwriting, monospace), loaded on demand from the Google Fonts API the moment a
+  family is picked. Only the font file is fetched — never your image or any user data.
 - **Cost & access:** completely free, no account, no login, no watermark on exports,
   no paid tier. Supported by ads on the surrounding content/guide pages only — never
   inside the editing canvas.
@@ -45,7 +48,7 @@ project is open source, so the privacy claim is auditable rather than promised.
 - [JPG to PNG](https://klipzo.app/jpg-to-png): Convert JPG images to lossless PNG.
 - [WebP converter](https://klipzo.app/webp-converter): Convert images to and from WebP.
 - [Rotate image](https://klipzo.app/rotate-image): Rotate, flip, and straighten photos.
-- [Add text to photo](https://klipzo.app/add-text-to-photo): Captions, titles, and text watermarks baked in on-device.
+- [Add text to photo](https://klipzo.app/add-text-to-photo): Captions, titles, and text watermarks with 100+ Google Fonts, baked in on-device.
 - [Remove background](https://klipzo.app/remove-background): Cut out the background from an image in the browser.
 
 ## Video tools

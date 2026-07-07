@@ -1,7 +1,6 @@
 import { useEditor } from "../store";
 import { overlayId, type TextOverlay } from "../types";
-
-const FONTS = ["Inter Variable", "Georgia", "Courier New", "Impact", "Comic Sans MS", "Arial"];
+import { LOCAL_FONTS, GOOGLE_FONT_GROUPS, loadFont } from "../fonts";
 
 export function TextPanel() {
   const present = useEditor((s) => s.present);
@@ -53,8 +52,15 @@ export function TextPanel() {
             <textarea rows={2} value={selected.text} onChange={(e) => set({ text: e.target.value }, false)} onBlur={() => set({}, true)} />
           </label>
           <label className="ed-field-col">Font
-            <select value={selected.fontFamily} onChange={(e) => set({ fontFamily: e.target.value })}>
-              {FONTS.map((f) => <option key={f} value={f}>{f}</option>)}
+            <select value={selected.fontFamily} onChange={(e) => { const f = e.target.value; void loadFont(f); set({ fontFamily: f }); }}>
+              <optgroup label="Standard">
+                {LOCAL_FONTS.map((f) => <option key={f} value={f}>{f}</option>)}
+              </optgroup>
+              {GOOGLE_FONT_GROUPS.map((g) => (
+                <optgroup key={g.label} label={`Google · ${g.label}`}>
+                  {g.fonts.map((f) => <option key={f} value={f}>{f}</option>)}
+                </optgroup>
+              ))}
             </select>
           </label>
           <label className="ed-field-col">Size

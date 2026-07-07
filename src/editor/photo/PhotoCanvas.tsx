@@ -140,6 +140,14 @@ export const PhotoCanvas = forwardRef<PhotoCanvasHandle, Props>(function PhotoCa
     tr.getLayer()?.batchDraw();
   }, [activeTool, cropRect, stageW, stageH]);
 
+  // When a web font finishes loading, redraw so Konva text reflows into the real
+  // face instead of the fallback it rasterized with.
+  useEffect(() => {
+    const redraw = () => stageRef.current?.batchDraw();
+    document.fonts.addEventListener("loadingdone", redraw);
+    return () => document.fonts.removeEventListener("loadingdone", redraw);
+  }, [stageRef]);
+
   // Freehand drawing.
   const drawing = useRef<DrawOverlay | null>(null);
   const [drawPreview, setDrawPreview] = useState<number[] | null>(null);
