@@ -38,20 +38,6 @@ const enabled =
         </div>
       </div>
 
-      <style>{`
-        .consent { position: fixed; left: 0; right: 0; bottom: 0; z-index: 80; padding: 0.85rem;
-          background: var(--color-surface); border-top: 1px solid var(--color-border);
-          box-shadow: 0 -8px 24px rgb(0 0 0 / 0.12); }
-        .consent__inner { max-width: 72rem; margin-inline: auto; display: flex; flex-wrap: wrap;
-          align-items: center; gap: 1rem; justify-content: space-between; }
-        .consent__text { max-width: 46rem; }
-        .consent__text strong { display: block; margin-bottom: 0.15rem; font-size: 0.92rem; }
-        .consent__text p { font-size: 0.82rem; color: var(--color-fg-muted); line-height: 1.5; }
-        .consent__actions { display: flex; gap: 0.5rem; flex: 0 0 auto; }
-        .consent__btn { white-space: nowrap; }
-        @media (max-width: 560px) { .consent__actions { width: 100%; } .consent__btn { flex: 1; } }
-      `}</style>
-
       <script
         is:inline
         set:html={`
@@ -93,3 +79,67 @@ const enabled =
     </div>
   )
 }
+
+<style>
+  .consent {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 80;
+    padding: 0.9rem 1rem calc(0.9rem + env(safe-area-inset-bottom, 0px));
+    background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+    backdrop-filter: saturate(1.2) blur(8px);
+    border-top: 1px solid var(--color-border);
+    box-shadow: 0 -8px 28px rgb(0 0 0 / 0.16);
+  }
+  .consent[hidden] {
+    display: none;
+  }
+  .consent__inner {
+    max-width: 68rem;
+    margin-inline: auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.5rem;
+    justify-content: space-between;
+  }
+  .consent__text {
+    flex: 1 1 22rem;
+    min-width: 0;
+  }
+  .consent__text strong {
+    display: block;
+    margin-bottom: 0.15rem;
+    font-size: 0.9rem;
+    color: var(--color-fg);
+  }
+  .consent__text p {
+    font-size: 0.82rem;
+    color: var(--color-fg-muted);
+    line-height: 1.5;
+    max-width: 52rem;
+  }
+  .consent__text a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .consent__actions {
+    display: flex;
+    gap: 0.5rem;
+    flex: 0 0 auto;
+  }
+  .consent__btn {
+    white-space: nowrap;
+  }
+  @media (max-width: 560px) {
+    .consent__actions {
+      width: 100%;
+    }
+    .consent__btn {
+      flex: 1;
+    }
+  }
+</style>
