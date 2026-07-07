@@ -59,10 +59,14 @@ export const MONETIZATION = {
   gtmContainerId: "__GTM_CONTAINER_ID__", // GTM-XXXXXXX
 } as const;
 
-/** Reserved for the future — do NOT implement (§1). */
+/**
+ * `affiliateNetworkId` remains reserved — do NOT implement (§1).
+ * `donationLink` powers the optional "Support Klipzo" link in the editor footer,
+ * gated by `isConfigured()` — set it to a placeholder to hide the link again.
+ */
 export const FUTURE = {
   affiliateNetworkId: "__AFFILIATE_NETWORK_ID__",
-  donationLink: "__DONATION_LINK__",
+  donationLink: "https://ko-fi.com/klipzo",
 } as const;
 
 /**
