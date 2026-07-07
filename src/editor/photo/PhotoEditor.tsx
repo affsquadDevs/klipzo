@@ -13,6 +13,7 @@ import { overlayId, type ToolId, type TextOverlay } from "./types";
 import { AdjustPanel } from "./panels/AdjustPanel";
 import { FiltersPanel } from "./panels/FiltersPanel";
 import { CropPanel } from "./panels/CropPanel";
+import { BlurPanel } from "./panels/BlurPanel";
 import { TransformPanel } from "./panels/TransformPanel";
 import { ResizePanel } from "./panels/ResizePanel";
 import { TextPanel } from "./panels/TextPanel";
@@ -31,6 +32,7 @@ const TOOLS: Array<{ id: ToolId; label: string; icon: string }> = [
   { id: "adjust", label: "Adjust", icon: "🎚" },
   { id: "filters", label: "Filters", icon: "🎨" },
   { id: "crop", label: "Crop", icon: "⛶" },
+  { id: "blur", label: "Blur", icon: "🌫" },
   { id: "transform", label: "Rotate", icon: "⟲" },
   { id: "resize", label: "Resize", icon: "⤢" },
   { id: "text", label: "Text", icon: "T" },
@@ -46,6 +48,8 @@ function resolvePreset(): { tool: ToolId; autoExport: boolean; meme: boolean } {
   const map: Record<string, ToolId> = {
     crop: "crop",
     circle: "crop",
+    blur: "blur",
+    censor: "blur",
     resize: "resize",
     rotate: "transform",
     text: "text",
@@ -105,6 +109,7 @@ export function PhotoEditor({ media, onClose }: Props) {
   const stageRef = useRef<Konva.Stage>(null);
   const canvasHandle = useRef<PhotoCanvasHandle>(null);
   const [cropRect, setCropRect] = useState<CropRect | null>(null);
+  const [blurRect, setBlurRect] = useState<CropRect | null>(null);
   const [aspectId, setAspectId] = useState("free");
   const [drawStyle, setDrawStyle] = useState({ stroke: "#ff3b3b", strokeWidth: 8 });
   const [exportOpen, setExportOpen] = useState(false);
@@ -156,6 +161,19 @@ export function PhotoEditor({ media, onClose }: Props) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [media]);
+
+  // Give the blur tool a starting box (centered) the first time it opens.
+  useEffect(() => {
+    if (activeTool !== "blur" || !present || blurRect) return;
+    const w = Math.round(present.width * 0.35);
+    const h = Math.round(present.height * 0.35);
+    setBlurRect({
+      x: Math.round((present.width - w) / 2),
+      y: Math.round((present.height - h) / 2),
+      width: w,
+      height: h,
+    });
+  }, [activeTool, present, blurRect]);
 
   // Keep the crop rect within bounds when the image dimensions change.
   useEffect(() => {
@@ -224,6 +242,8 @@ export function PhotoEditor({ media, onClose }: Props) {
             stageRef={stageRef}
             cropRect={activeTool === "crop" ? cropRect : null}
             onCropRectChange={setCropRect}
+            blurRect={activeTool === "blur" ? blurRect : null}
+            onBlurRectChange={setBlurRect}
             drawStyle={drawStyle}
           />
         ) : decodeError ? (
@@ -245,6 +265,7 @@ export function PhotoEditor({ media, onClose }: Props) {
         {activeTool === "crop" && (
           <CropPanel cropRect={cropRect} setCropRect={setCropRect} aspectId={aspectId} setAspectId={setAspectId} />
         )}
+        {activeTool === "blur" && <BlurPanel blurRect={blurRect} />}
         {activeTool === "transform" && <TransformPanel />}
         {activeTool === "resize" && <ResizePanel />}
         {activeTool === "text" && <TextPanel />}

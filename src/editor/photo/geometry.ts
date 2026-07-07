@@ -38,6 +38,50 @@ export function cropSource(src: CanvasSource, rect: CropRect): HTMLCanvasElement
   return out;
 }
 
+/**
+ * Blur or pixelate the `rect` region of the image and bake it in. `amount` is the
+ * blur radius in px, or the pixel-block size when `mode` is "pixelate". Used to
+ * censor faces / sensitive info on-device.
+ */
+export function blurRegion(
+  src: CanvasSource & { width: number; height: number },
+  rect: CropRect,
+  mode: "blur" | "pixelate",
+  amount: number,
+): HTMLCanvasElement {
+  const out = make(src.width, src.height);
+  const ctx = out.getContext("2d")!;
+  ctx.drawImage(src, 0, 0);
+
+  const x = Math.max(0, Math.round(rect.x));
+  const y = Math.max(0, Math.round(rect.y));
+  const w = Math.min(src.width - x, Math.round(rect.width));
+  const h = Math.min(src.height - y, Math.round(rect.height));
+  if (w < 1 || h < 1) return out;
+
+  if (mode === "pixelate") {
+    const block = Math.max(2, Math.round(amount));
+    const tw = Math.max(1, Math.round(w / block));
+    const th = Math.max(1, Math.round(h / block));
+    const tmp = make(tw, th);
+    const tctx = tmp.getContext("2d")!;
+    tctx.imageSmoothingEnabled = false;
+    tctx.drawImage(src, x, y, w, h, 0, 0, tw, th);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(tmp, 0, 0, tw, th, x, y, w, h);
+    ctx.imageSmoothingEnabled = true;
+  } else {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x, y, w, h);
+    ctx.clip();
+    ctx.filter = `blur(${Math.max(1, Math.round(amount))}px)`;
+    ctx.drawImage(src, 0, 0);
+    ctx.restore();
+  }
+  return out;
+}
+
 /** Crop to `rect`, then keep only the inscribed ellipse — the corners become
  *  transparent (a circle when the rect is square). Export as PNG/WebP to keep it. */
 export function cropCircle(src: CanvasSource, rect: CropRect): HTMLCanvasElement {

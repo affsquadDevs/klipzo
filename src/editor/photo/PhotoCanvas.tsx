@@ -20,11 +20,13 @@ interface Props {
   stageRef: React.RefObject<Konva.Stage | null>;
   cropRect: CropRect | null;
   onCropRectChange: (r: CropRect) => void;
+  blurRect: CropRect | null;
+  onBlurRectChange: (r: CropRect) => void;
   drawStyle: { stroke: string; strokeWidth: number };
 }
 
 export const PhotoCanvas = forwardRef<PhotoCanvasHandle, Props>(function PhotoCanvas(
-  { stageRef, cropRect, onCropRectChange, drawStyle },
+  { stageRef, cropRect, onCropRectChange, blurRect, onBlurRectChange, drawStyle },
   ref,
 ) {
   const present = useEditor((s) => s.present);
@@ -39,6 +41,8 @@ export const PhotoCanvas = forwardRef<PhotoCanvasHandle, Props>(function PhotoCa
   const trRef = useRef<Konva.Transformer>(null);
   const cropRef = useRef<Konva.Rect>(null);
   const cropTrRef = useRef<Konva.Transformer>(null);
+  const blurRef = useRef<Konva.Rect>(null);
+  const blurTrRef = useRef<Konva.Transformer>(null);
 
   const rendererRef = useRef<AdjustmentRenderer | null>(null);
   const [glOk] = useState(() => isWebGLAvailable());
@@ -118,7 +122,7 @@ export const PhotoCanvas = forwardRef<PhotoCanvasHandle, Props>(function PhotoCa
     const tr = trRef.current;
     const stage = stageRef.current;
     if (!tr || !stage) return;
-    if (!selectedId || activeTool === "crop" || activeTool === "draw") {
+    if (!selectedId || activeTool === "crop" || activeTool === "draw" || activeTool === "blur") {
       tr.nodes([]);
       tr.getLayer()?.batchDraw();
       return;
@@ -139,6 +143,14 @@ export const PhotoCanvas = forwardRef<PhotoCanvasHandle, Props>(function PhotoCa
     }
     tr.getLayer()?.batchDraw();
   }, [activeTool, cropRect, stageW, stageH]);
+
+  // Attach blur-region transformer.
+  useEffect(() => {
+    const tr = blurTrRef.current;
+    if (!tr) return;
+    tr.nodes(activeTool === "blur" && blurRef.current ? [blurRef.current] : []);
+    tr.getLayer()?.batchDraw();
+  }, [activeTool, blurRect, stageW, stageH]);
 
   // When a web font finishes loading, redraw so Konva text reflows into the real
   // face instead of the fallback it rasterized with.
@@ -299,6 +311,40 @@ export const PhotoCanvas = forwardRef<PhotoCanvasHandle, Props>(function PhotoCa
               }}
             />
             <Transformer ref={cropTrRef} rotateEnabled={false} anchorSize={10} borderStroke="#fff" anchorStroke="#fff" anchorFill="#4f7cff" />
+          </Layer>
+        )}
+
+        {activeTool === "blur" && blurRect && (
+          <Layer>
+            <Rect
+              ref={blurRef}
+              x={blurRect.x * scale}
+              y={blurRect.y * scale}
+              width={blurRect.width * scale}
+              height={blurRect.height * scale}
+              stroke="#4f7cff"
+              strokeWidth={1.5}
+              dash={[6, 4]}
+              fill="rgba(79,124,255,0.12)"
+              draggable
+              onDragEnd={(e) => {
+                onBlurRectChange({ ...blurRect, x: e.target.x() / scale, y: e.target.y() / scale });
+              }}
+              onTransformEnd={() => {
+                const node = blurRef.current!;
+                const sx = node.scaleX();
+                const sy = node.scaleY();
+                node.scaleX(1);
+                node.scaleY(1);
+                onBlurRectChange({
+                  x: node.x() / scale,
+                  y: node.y() / scale,
+                  width: Math.max(8, (node.width() * sx) / scale),
+                  height: Math.max(8, (node.height() * sy) / scale),
+                });
+              }}
+            />
+            <Transformer ref={blurTrRef} rotateEnabled={false} anchorSize={10} borderStroke="#4f7cff" anchorStroke="#4f7cff" anchorFill="#fff" />
           </Layer>
         )}
       </Stage>

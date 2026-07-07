@@ -162,6 +162,18 @@ export const PHOTO_TOOLS: Tool[] = [
     status: "v1",
   },
   {
+    slug: "blur-image",
+    kind: "photo",
+    label: "Blur image",
+    h1: "Blur or censor part of a photo, free and private",
+    title: "Blur Image Online Free, Censor Faces and Info, No Upload",
+    description:
+      "Blur or pixelate a face, license plate, or sensitive detail in a photo. It all happens in your browser, so your image is never uploaded. Free, no account, no watermark.",
+    editorPreset: "blur",
+    tagline: "Hide faces and sensitive details.",
+    status: "v1",
+  },
+  {
     slug: "remove-background",
     kind: "photo",
     label: "Remove background",

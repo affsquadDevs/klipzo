@@ -53,6 +53,7 @@ export type ToolId =
   | "adjust"
   | "filters"
   | "crop"
+  | "blur"
   | "transform"
   | "resize"
   | "text"
