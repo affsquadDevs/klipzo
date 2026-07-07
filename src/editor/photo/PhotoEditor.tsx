@@ -9,7 +9,7 @@ import type { LoadedMedia } from "../core/media";
 import { useEditor } from "./store";
 import { toCanvas, type CropRect } from "./geometry";
 import { PhotoCanvas, type PhotoCanvasHandle } from "./PhotoCanvas";
-import type { ToolId } from "./types";
+import { overlayId, type ToolId, type TextOverlay } from "./types";
 import { AdjustPanel } from "./panels/AdjustPanel";
 import { FiltersPanel } from "./panels/FiltersPanel";
 import { CropPanel } from "./panels/CropPanel";
@@ -39,8 +39,8 @@ const TOOLS: Array<{ id: ToolId; label: string; icon: string }> = [
 ];
 
 /** Map a landing-page preset (?tool=) to an editor tool + optional auto-export. */
-function resolvePreset(): { tool: ToolId; autoExport: boolean } {
-  if (typeof window === "undefined") return { tool: "adjust", autoExport: false };
+function resolvePreset(): { tool: ToolId; autoExport: boolean; meme: boolean } {
+  if (typeof window === "undefined") return { tool: "adjust", autoExport: false, meme: false };
   const raw = new URLSearchParams(window.location.search).get("tool") ?? "";
   const key = raw.split(":")[0] ?? "";
   const map: Record<string, ToolId> = {
@@ -48,12 +48,44 @@ function resolvePreset(): { tool: ToolId; autoExport: boolean } {
     resize: "resize",
     rotate: "transform",
     text: "text",
+    meme: "text",
     adjust: "adjust",
     filters: "filters",
     draw: "draw",
   };
   const autoExport = key === "convert" || key === "compress";
-  return { tool: map[key] ?? "adjust", autoExport };
+  return { tool: map[key] ?? "adjust", autoExport, meme: key === "meme" };
+}
+
+/** Two classic Impact top/bottom caption boxes, sized to the image. */
+function memeOverlays(width: number, height: number): TextOverlay[] {
+  const fontSize = Math.max(18, Math.round(width * 0.1));
+  const strokeWidth = Math.max(2, Math.round(fontSize * 0.06));
+  const base = {
+    type: "text" as const,
+    rotation: 0,
+    opacity: 1,
+    draggable: true,
+    fontFamily: "Impact",
+    fontSize,
+    fontStyle: "bold",
+    fill: "#ffffff",
+    align: "center" as const,
+    stroke: "#000000",
+    strokeWidth,
+    shadow: false,
+    x: 0,
+    width,
+  };
+  return [
+    { ...base, id: overlayId("text"), text: "TOP TEXT", y: Math.round(height * 0.03) },
+    {
+      ...base,
+      id: overlayId("text"),
+      text: "BOTTOM TEXT",
+      y: Math.round(height - fontSize * 1.35),
+    },
+  ];
 }
 
 export function PhotoEditor({ media, onClose }: Props) {
@@ -61,6 +93,7 @@ export function PhotoEditor({ media, onClose }: Props) {
   const activeTool = useEditor((s) => s.activeTool);
   const setTool = useEditor((s) => s.setTool);
   const load = useEditor((s) => s.load);
+  const addOverlay = useEditor((s) => s.addOverlay);
   const clear = useEditor((s) => s.clear);
   const undo = useEditor((s) => s.undo);
   const redo = useEditor((s) => s.redo);
@@ -109,7 +142,10 @@ export function PhotoEditor({ media, onClose }: Props) {
       load(canvas);
       setCropRect({ x: 0, y: 0, width: canvas.width, height: canvas.height });
       setTool(preset.tool);
-      track("file_imported", { media_kind: "image", tool: preset.tool });
+      if (preset.meme) {
+        for (const ov of memeOverlays(canvas.width, canvas.height)) addOverlay(ov);
+      }
+      track("file_imported", { media_kind: "image", tool: preset.meme ? "meme" : preset.tool });
       if (preset.autoExport) setTimeout(() => setExportOpen(true), 300);
     }
     run();

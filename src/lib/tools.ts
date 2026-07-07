@@ -138,6 +138,18 @@ export const PHOTO_TOOLS: Tool[] = [
     status: "v1",
   },
   {
+    slug: "meme-generator",
+    kind: "photo",
+    label: "Meme generator",
+    h1: "Meme generator: make a meme online, free",
+    title: "Meme Generator Online Free, No Upload, No Watermark",
+    description:
+      "Make a meme in your browser with classic top and bottom Impact text. Free, no sign-up, no watermark, and nothing is uploaded. Your image never leaves your device.",
+    editorPreset: "meme",
+    tagline: "Top and bottom Impact text, instantly.",
+    status: "v1",
+  },
+  {
     slug: "remove-background",
     kind: "photo",
     label: "Remove background",
