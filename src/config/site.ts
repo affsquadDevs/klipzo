@@ -55,9 +55,9 @@ export const AUTHOR = {
 
 /** Monetization + analytics (§7, §9). All consent-gated; placeholders render dev stubs. */
 export const MONETIZATION = {
-  adsensePublisherId: "__ADSENSE_PUBLISHER_ID__", // ca-pub-XXXXXXXXXXXXXXXX
-  ga4MeasurementId: "__GA4_MEASUREMENT_ID__", // G-XXXXXXXXXX
-  gtmContainerId: "__GTM_CONTAINER_ID__", // GTM-XXXXXXX
+  adsensePublisherId: "ca-pub-2980943706375055",
+  ga4MeasurementId: "__GA4_MEASUREMENT_ID__", // G-XXXXXXXXXX — managed inside GTM
+  gtmContainerId: "GTM-5225JJ9M",
 } as const;
 
 /**

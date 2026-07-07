@@ -8,18 +8,26 @@ real-looking ID. Search the repo for `__` to find them all:
 grep -rn "__[A-Z0-9_]\+__" src public *.json *.toml
 ```
 
-## Required before launch
+## Launch config — status
 
-| Value | Where | Purpose | Blocking |
-| --- | --- | --- | --- |
-| `ADSENSE_PUBLISHER_ID` | `src/config/site.ts` → `MONETIZATION.adsensePublisherId`, `public/ads.txt` | AdSense units + ads.txt | Ads (post-launch) |
-| `GA4_MEASUREMENT_ID` | `src/config/site.ts` → `MONETIZATION.ga4MeasurementId` | GA4 (via GTM) | Analytics (post-launch) |
-| `GTM_CONTAINER_ID` | `src/config/site.ts` → `MONETIZATION.gtmContainerId` | Tag Manager container | Analytics/ads (post-launch) |
+All launch-blocking config is now set in `src/config/site.ts`:
 
-`CONTACT_EMAIL` = `hello@klipzo.app`, `ORG_LEGAL_NAME` = `Klipzo Team`, `AUTHOR_NAME` =
-`Klipzo Team` are set (`src/config/site.ts`). `AUTHOR_CREDENTIALS` / `AUTHOR_BIO_SHORT`
-stay as placeholders — they degrade gracefully (byline shows a generic credential; the
-About bio section is hidden) and can be filled if a named author is ever added.
+- **GTM** `GTM-5225JJ9M` (`MONETIZATION.gtmContainerId`) — loaded high in `<head>` via
+  `<ConsentAnalytics>` (after the Consent Mode v2 default) + `<noscript>` after `<body>`.
+- **AdSense** `ca-pub-2980943706375055` (`MONETIZATION.adsensePublisherId`) — async loader
+  in `<head>` on every page; `<AdSlot>` renders real units on content pages. `public/ads.txt`
+  = `google.com, pub-2980943706375055, DIRECT, f08c47fec0942fa0`.
+- `CONTACT_EMAIL` = `hello@klipzo.app`, `ORG_LEGAL_NAME` = `Klipzo Team`, `AUTHOR_NAME` = `Klipzo Team`.
+
+Still optional / not blocking:
+
+- `GA4_MEASUREMENT_ID` — left as a placeholder; GA4 is configured **inside GTM**, so no
+  separate id is needed here unless you want a direct gtag config.
+- `AUTHOR_CREDENTIALS` / `AUTHOR_BIO_SHORT` — degrade gracefully (byline shows a generic
+  credential; the About bio section is hidden). Fill if a named author is ever added.
+- **Certified CMP** — still recommended before serving *personalized* ads in the EEA/UK/CH.
+  Consent Mode v2 + the built-in banner are wired (see the Consent/CMP section below), but
+  that is signalling, not an IAB TCF-certified CMP.
 
 ## Assets to add to `public/`
 

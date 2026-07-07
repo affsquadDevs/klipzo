@@ -12,6 +12,7 @@ import Seo from "../components/Seo.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import ConsentAnalytics from "../components/monetization/ConsentAnalytics.astro";
+import GtmNoscript from "../components/monetization/GtmNoscript.astro";
 import ConsentBanner from "../components/monetization/ConsentBanner.astro";
 
 interface Props {
@@ -51,6 +52,11 @@ const {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content={SITE.themeColor} />
     <meta name="generator" content={Astro.generator} />
+
+    {/* Google Tag Manager + Consent Mode v2 — kept as high in <head> as possible.
+        Emits nothing until real ids are set in MONETIZATION (src/config/site.ts). */}
+    <ConsentAnalytics />
+
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -76,10 +82,9 @@ const {
       noindex={noindex}
       schema={schema}
     />
-
-    <ConsentAnalytics />
   </head>
   <body>
+    <GtmNoscript />
     <a href="#main" class="k-skip-link">Skip to content</a>
     {!bareChrome && <Header />}
     <main id="main" class={mainClass}>

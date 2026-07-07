@@ -30,20 +30,23 @@ console.log(`\n[1] Secrets / real IDs not committed`);
 {
   const srcFiles = walk("src").concat(["public/ads.txt"]);
   const patterns = [/ca-pub-\d{10,}/, /\bG-[A-Z0-9]{8,}\b/, /\bGTM-[A-Z0-9]{5,}\b/];
+  // The intentionally-configured live ids (GTM + AdSense). Any OTHER real-looking id
+  // is still flagged, so a stray/leaked id can't slip in unnoticed.
+  const allowed = new Set(["GTM-5225JJ9M", "ca-pub-2980943706375055"]);
   let found = false;
   for (const f of srcFiles) {
     if (!existsSync(f)) continue;
     const t = readFileSync(f, "utf8");
     for (const re of patterns) {
       const m = t.match(re);
-      // Allow the obvious placeholder tokens.
-      if (m && !/X{5,}|TESTONLY|__/.test(m[0])) {
-        bad(`real-looking id "${m[0]}" in ${f}`);
+      // Allow the obvious placeholder tokens and the configured live ids.
+      if (m && !/X{5,}|TESTONLY|__/.test(m[0]) && !allowed.has(m[0])) {
+        bad(`unexpected real-looking id "${m[0]}" in ${f}`);
         found = true;
       }
     }
   }
-  if (!found) ok("no real ad/analytics IDs in source (placeholders only)");
+  if (!found) ok("no unexpected ad/analytics IDs (only the configured GTM + AdSense ids)");
 }
 
 console.log(`\n[2] Required files present`);

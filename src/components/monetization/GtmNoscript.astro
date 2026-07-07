@@ -1,0 +1,23 @@
+---
+/**
+ * Google Tag Manager <noscript> fallback. Must sit immediately after the opening
+ * <body> tag. Gated by isConfigured() so it emits nothing until a real container
+ * id is set (mirrors <ConsentAnalytics>, which loads GTM in the <head>).
+ */
+import { MONETIZATION, isConfigured } from "../../config/site";
+
+const gtm = isConfigured(MONETIZATION.gtmContainerId) ? MONETIZATION.gtmContainerId : null;
+---
+
+{
+  gtm && (
+    <noscript>
+      <iframe
+        src={`https://www.googletagmanager.com/ns.html?id=${gtm}`}
+        height="0"
+        width="0"
+        style="display:none;visibility:hidden"
+      />
+    </noscript>
+  )
+}
