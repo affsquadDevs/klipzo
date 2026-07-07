@@ -1,8 +1,10 @@
 ---
 /**
- * Reusable ad slot (§7). ALWAYS reserves a fixed height to prevent CLS. Renders a
- * neutral dev placeholder unless a real AdSense publisher id is configured, in which
- * case it emits a real <ins class="adsbygoogle"> unit that loads async/lazily.
+ * Reusable ad slot (§7). With a manual `slot` id it emits a real
+ * <ins class="adsbygoogle"> unit (fixed height reserved to prevent CLS). Without one
+ * it renders NOTHING in production — the site runs AdSense Auto Ads, which places ads
+ * itself, so a manual reserved slot would just show an empty gap. In dev it renders a
+ * neutral placeholder as a layout reference.
  *
  * Placement rules (enforced by callers, not this component):
  *  - Content/landing/guide pages only, below the fold.
@@ -33,32 +35,37 @@ const publisher = isConfigured(MONETIZATION.adsensePublisherId)
   ? MONETIZATION.adsensePublisherId
   : null;
 const live = Boolean(publisher && slot);
+// Only show the reserved placeholder in dev. In production without a manual slot id,
+// render nothing and let AdSense Auto Ads handle placement.
+const showDevPlaceholder = !live && import.meta.env.DEV;
 ---
 
-<aside
-  class:list={["k-adslot-wrap", className]}
-  style={`min-height:${minHeight}px`}
-  aria-label={label}
-  data-ad-container
->
-  <span class="k-adslot-label">{label}</span>
-  {
-    live ? (
-      <ins
-        class="adsbygoogle"
-        style={`display:block;min-height:${minHeight}px`}
-        data-ad-client={publisher}
-        data-ad-slot={slot}
-        data-ad-format={format}
-        data-full-width-responsive="true"
-      />
-    ) : (
-      <div class="k-adslot" style={`min-height:${minHeight}px`}>
-        Ad slot ({minHeight}px reserved), inactive until a publisher id is set
-      </div>
-    )
-  }
-</aside>
+{
+  (live || showDevPlaceholder) && (
+    <aside
+      class:list={["k-adslot-wrap", className]}
+      style={`min-height:${minHeight}px`}
+      aria-label={label}
+      data-ad-container
+    >
+      <span class="k-adslot-label">{label}</span>
+      {live ? (
+        <ins
+          class="adsbygoogle"
+          style={`display:block;min-height:${minHeight}px`}
+          data-ad-client={publisher}
+          data-ad-slot={slot}
+          data-ad-format={format}
+          data-full-width-responsive="true"
+        />
+      ) : (
+        <div class="k-adslot" style={`min-height:${minHeight}px`}>
+          Ad slot ({minHeight}px reserved), inactive until a publisher id is set
+        </div>
+      )}
+    </aside>
+  )
+}
 
 {live && <script is:inline set:html={`(adsbygoogle = window.adsbygoogle || []).push({});`} />}
 
