@@ -26,6 +26,8 @@ export const SITE = {
   /** Default social share image (public/, 1200×630). */
   ogImage: "/og/default.png",
   themeColor: "#0b0f17",
+  /** Public, open-source repository. Klipzo is auditable by design. */
+  repo: "https://github.com/affsquadDevs/klipzo",
 } as const;
 
 /** i18n (§1). Route all UI strings + number/size/duration formatting through @i18n. */
