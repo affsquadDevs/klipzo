@@ -41,6 +41,7 @@ const MIN_PPS = 6; // very long timelines: keep clips grabbable without huge wid
 const MAX_PPS = 220; // very short clips: don't blow a 1s clip up to the whole viewport
 const FALLBACK_PPS = 80; // before the viewport width is measured
 const EDGE_PAD = 24; // px of breathing room so the out-handle isn't flush to the edge
+const MIN_TEXT = 0.2; // shortest a text overlay can be trimmed to (seconds)
 
 export function MultiTimeline({ project, current, onSeek }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null); // scroll viewport (measured for fit)
@@ -57,6 +58,13 @@ export function MultiTimeline({ project, current, onSeek }: Props) {
         speed: number;
       }
     | { kind: "text-move"; textId: string; grabOffset: number }
+    | {
+        kind: "text-trim-in" | "text-trim-out";
+        textId: string;
+        startClientX: number;
+        startStart: number;
+        startEnd: number;
+      }
     | { kind: "music-move"; musicId: string; grabOffset: number }
   >(null);
 
@@ -159,6 +167,18 @@ export function MultiTimeline({ project, current, onSeek }: Props) {
         setTrimInView({ fromIndex: drag.clipIndex, sec });
       } else {
         trimClip(drag.clipIndex, drag.startIn, drag.startOut + deltaSource, false);
+      }
+      return;
+    }
+    if (drag.kind === "text-trim-in" || drag.kind === "text-trim-out") {
+      // Text bars float freely on their lane, so the grabbed edge moves directly.
+      const deltaSec = (e.clientX - drag.startClientX) / pxPerSec;
+      if (drag.kind === "text-trim-in") {
+        const start = Math.min(Math.max(0, drag.startStart + deltaSec), drag.startEnd - MIN_TEXT);
+        patchText(drag.textId, { start }, false);
+      } else {
+        const end = Math.max(drag.startStart + MIN_TEXT, Math.min(drag.startEnd + deltaSec, duration));
+        patchText(drag.textId, { end }, false);
       }
       return;
     }
@@ -302,12 +322,13 @@ export function MultiTimeline({ project, current, onSeek }: Props) {
               // Clamp to the visible timeline so an out-of-range end can't overflow.
               const barStart = Math.max(0, Math.min(text.start, duration));
               const barEnd = Math.max(barStart, Math.min(text.end, duration));
+              const isSel = selectedTextId === text.id;
               return (
-                <button
+                <div
                   key={text.id}
-                  className={`mt-textbar ${selectedTextId === text.id ? "is-selected" : ""}`}
+                  className={`mt-textbar ${isSel ? "is-selected" : ""}`}
                   style={{ left: px(barStart), width: px(Math.max(0.1, barEnd - barStart)) }}
-                  title={`“${text.text.slice(0, 24)}” ${formatDuration(text.start)}–${formatDuration(text.end)} (drag to move)`}
+                  title={`“${text.text.slice(0, 24)}” ${formatDuration(text.start)}–${formatDuration(text.end)} (drag to move, edges to trim)`}
                   onPointerDown={(e) => {
                     e.stopPropagation();
                     capture(e);
@@ -322,8 +343,50 @@ export function MultiTimeline({ project, current, onSeek }: Props) {
                   onPointerMove={onPointerMove}
                   onPointerUp={onPointerUp}
                 >
-                  T
-                </button>
+                  <span className="mt-textbar__label">T</span>
+                  {isSel && (
+                    <>
+                      <button
+                        className="mt-handle mt-handle--in"
+                        aria-label="Trim text start"
+                        onPointerDown={(e) => {
+                          e.stopPropagation();
+                          capture(e);
+                          selectText(text.id);
+                          beginStroke();
+                          dragRef.current = {
+                            kind: "text-trim-in",
+                            textId: text.id,
+                            startClientX: e.clientX,
+                            startStart: text.start,
+                            startEnd: text.end,
+                          };
+                        }}
+                        onPointerMove={onPointerMove}
+                        onPointerUp={onPointerUp}
+                      />
+                      <button
+                        className="mt-handle mt-handle--out"
+                        aria-label="Trim text end"
+                        onPointerDown={(e) => {
+                          e.stopPropagation();
+                          capture(e);
+                          selectText(text.id);
+                          beginStroke();
+                          dragRef.current = {
+                            kind: "text-trim-out",
+                            textId: text.id,
+                            startClientX: e.clientX,
+                            startStart: text.start,
+                            startEnd: text.end,
+                          };
+                        }}
+                        onPointerMove={onPointerMove}
+                        onPointerUp={onPointerUp}
+                      />
+                    </>
+                  )}
+                </div>
               );
             })}
           </div>

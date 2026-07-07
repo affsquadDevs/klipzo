@@ -291,7 +291,7 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  min-width: 14px;
+  min-width: 16px;
   border: 1px solid color-mix(in srgb, #d98324 60%, var(--color-border));
   background: color-mix(in srgb, #d98324 25%, var(--color-surface));
   color: var(--color-fg-muted);
@@ -299,6 +299,17 @@
   font-size: 0.65rem;
   cursor: grab;
   touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+.mt-textbar__label {
+  pointer-events: none;
+}
+/* Trim handles in the text lane use the lane's orange, not the clip blue. */
+.mt-textbar .mt-handle {
+  background: #d98324;
 }
 .mt-textbar.is-selected {
   box-shadow: 0 0 0 1.5px #d98324;
